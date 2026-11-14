@@ -2,7 +2,7 @@ package xray
 
 type ClientTraffic struct {
 	Id         int    `json:"id" form:"id" gorm:"primaryKey;autoIncrement"`
-	InboundId  int    `json:"inboundId" form:"inboundId"`
+	InboundId  int    `json:"inboundId" form:"inboundId" gorm:"index"`
 	Enable     bool   `json:"enable" form:"enable"`
 	Email      string `json:"email" form:"email" gorm:"unique"`
 	Up         int64  `json:"up" form:"up"`

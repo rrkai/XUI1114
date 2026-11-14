@@ -19,6 +19,21 @@ var (
 	LocalizerBot *i18n.Localizer
 )
 
+const defaultLang = "zh-Hans"
+
+// normalizeLang keeps only Chinese and English supported.
+func normalizeLang(lang string) string {
+	lang = strings.ToLower(strings.ReplaceAll(lang, "_", "-"))
+	switch {
+	case strings.HasPrefix(lang, "zh"):
+		return "zh-Hans"
+	case strings.HasPrefix(lang, "en"):
+		return "en-US"
+	default:
+		return defaultLang
+	}
+}
+
 type I18nType string
 
 const (
@@ -31,8 +46,8 @@ type SettingService interface {
 }
 
 func InitLocalizer(i18nFS embed.FS, settingService SettingService) error {
-	// set default bundle to english
-	i18nBundle = i18n.NewBundle(language.MustParse("en-US"))
+	// Chinese is the default language, English remains as fallback
+	i18nBundle = i18n.NewBundle(language.MustParse(defaultLang))
 	i18nBundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 
 	// parse files
@@ -93,21 +108,19 @@ func I18n(i18nType I18nType, key string, params ...string) string {
 func initTGBotLocalizer(settingService SettingService) error {
 	botLang, err := settingService.GetTgLang()
 	if err != nil {
-		return err
+		botLang = defaultLang
 	}
 
-	LocalizerBot = i18n.NewLocalizer(i18nBundle, botLang)
+	LocalizerBot = i18n.NewLocalizer(i18nBundle, normalizeLang(botLang))
 	return nil
 }
 
 func LocalizerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var lang string
+		lang := defaultLang
 
 		if cookie, err := c.Request.Cookie("lang"); err == nil {
-			lang = cookie.Value
-		} else {
-			lang = c.GetHeader("Accept-Language")
+			lang = normalizeLang(cookie.Value)
 		}
 
 		LocalizerWeb = i18n.NewLocalizer(i18nBundle, lang)

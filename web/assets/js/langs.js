@@ -1,48 +1,24 @@
+const DEFAULT_LANG = 'zh-Hans';
+
 const supportLangs = [
-    {
-        name: 'English',
-        value: 'en-US',
-        icon: '🇺🇸',
-    },
-    {
-        name: 'فارسی',
-        value: 'fa-IR',
-        icon: '🇮🇷',
-    },
     {
         name: '汉语',
         value: 'zh-Hans',
         icon: '🇨🇳',
     },
     {
-        name: 'Русский',
-        value: 'ru-RU',
-        icon: '🇷🇺',
-    },
-    {
-        name: 'Tiếng Việt',
-        value: 'vi-VN',
-        icon: '🇻🇳',        
+        name: 'English',
+        value: 'en-US',
+        icon: '🇺🇸',
     },
 ];
 
 function getLang() {
     let lang = getCookie('lang');
 
-    if (!lang) {
-        if (window.navigator) {
-            lang = window.navigator.language || window.navigator.userLanguage;
-
-            if (isSupportLang(lang)) {
-                setCookie('lang', lang);
-            } else {
-                setCookie('lang', 'en-US');
-                window.location.reload();
-            }
-        } else {
-            setCookie('lang', 'en-US');
-            window.location.reload();
-        }
+    if (!isSupportLang(lang)) {
+        lang = DEFAULT_LANG;
+        setCookie('lang', lang);
     }
 
     return lang;
@@ -50,7 +26,7 @@ function getLang() {
 
 function setLang(lang) {
     if (!isSupportLang(lang)) {
-        lang = 'en-US';
+        lang = DEFAULT_LANG;
     }
 
     setCookie('lang', lang);
@@ -58,11 +34,5 @@ function setLang(lang) {
 }
 
 function isSupportLang(lang) {
-    for (l of supportLangs) {
-        if (l.value === lang) {
-            return true;
-        }
-    }
-
-    return false;
+    return supportLangs.some(l => l.value === lang);
 }

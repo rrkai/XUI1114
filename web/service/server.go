@@ -85,10 +85,6 @@ type Status struct {
 	} `json:"hostInfo"`
 }
 
-type Release struct {
-	TagName string `json:"tag_name"`
-}
-
 type ServerService struct {
 	xrayService        XrayService
 	inboundService     InboundService
@@ -225,32 +221,7 @@ func (s *ServerService) GetStatus(lastStatus *Status) *Status {
 }
 
 func (s *ServerService) GetXrayVersions() ([]string, error) {
-	url := "https://api.github.com/repos/XTLS/Xray-core/releases"
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-	buffer := bytes.NewBuffer(make([]byte, 8192))
-	buffer.Reset()
-	_, err = buffer.ReadFrom(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	releases := make([]Release, 0)
-	err = json.Unmarshal(buffer.Bytes(), &releases)
-	if err != nil {
-		return nil, err
-	}
-	var versions []string
-	for _, release := range releases {
-		if release.TagName >= "v26.4.25" {
-			versions = append(versions, release.TagName)
-		}
-	}
-	return versions, nil
+	return []string{xray.PinnedVersion}, nil
 }
 
 func (s *ServerService) StopXrayService() (string error) {
@@ -276,6 +247,7 @@ func (s *ServerService) RestartXrayService() (string error) {
 }
 
 func (s *ServerService) downloadXRay(version string) (string, error) {
+	version = xray.PinnedVersion
 	osName := runtime.GOOS
 	arch := runtime.GOARCH
 
@@ -327,6 +299,7 @@ func (s *ServerService) downloadXRay(version string) (string, error) {
 }
 
 func (s *ServerService) UpdateXray(version string) error {
+	version = xray.PinnedVersion
 	// 1. Stop xray before doing anything
 	if err := s.StopXrayService(); err != nil {
 		logger.Warning("failed to stop xray before update:", err)
@@ -541,6 +514,14 @@ func (s *ServerService) ImportDB(file multipart.File) error {
 	// Close existing DB to release file locks (especially on Windows)
 	if errClose := database.CloseDB(); errClose != nil {
 		logger.Warningf("Failed to close existing DB before replacement: %v", errClose)
+	}
+
+	// Remove stale WAL sidecar files so they cannot be applied to the imported DB
+	for _, suffix := range []string{"-wal", "-shm"} {
+		sidecar := config.GetDBPath() + suffix
+		if errRemove := os.Remove(sidecar); errRemove != nil && !os.IsNotExist(errRemove) {
+			logger.Warningf("Failed to remove %s: %v", sidecar, errRemove)
+		}
 	}
 
 	// Backup the current database for fallback

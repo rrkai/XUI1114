@@ -20,7 +20,7 @@ class AllSetting {
         this.tgBotBackup = false;
         this.tgBotLoginNotify = false;
         this.tgCpu = "";
-        this.tgLang = "";
+        this.tgLang = "zh-Hans";
         this.subEnable = false;
         this.subListen = "";
         this.subPort = "2096";
@@ -38,7 +38,7 @@ class AllSetting {
         this.subJsonRules = "";
         this.ipBlockAfterRemove = false;
 
-        this.timeLocation = "Asia/Tehran";
+        this.timeLocation = "Asia/Shanghai";
 
         if (data == null) {
             return

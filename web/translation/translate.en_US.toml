@@ -480,6 +480,8 @@
 "outboundTag" = "Outbound Tag"
 
 [pages.settings]
+language = "Language"
+telegramBotLanguage = "Telegram Bot Language"
 "title" = "Panel Settings"
 "save" = "Save"
 "infoDesc" = "Every change made here needs to be saved. Please restart the panel for the changes to take effect."
@@ -502,7 +504,7 @@
 "panelUrlPath" = "URI Path"
 "panelUrlPathDesc" = "The URI path for the web panel. (Begins with ‘/‘ and concludes with ‘/‘)"
 "pageSize" = "Pagination Size"
-"pageSizeDesc" = "The page size for the inbounds table. (0 = disable)"
+"pageSizeDesc" = "The page size for the inbound and outbound tables. (0 = disable)"
 "remarkModel" = "Remark Model & Separation Character"
 "sampleRemark" = "Sample Remark"
 "oldUsername" = "Current Username"

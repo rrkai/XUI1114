@@ -148,7 +148,7 @@
                                  :pagination="pagination(searchedOutbounds)"
                                  style="margin-top: 10px;">
                             <template slot="actions" slot-scope="text, row, index">
-                                <a-tooltip v-if="index > 0">
+                                <a-tooltip v-if="!isFirstOutbound(row)">
                                     <template slot="title">{{ i18n "pages.xray.rules.first" }}</template>
                                     <a-icon style="font-size: 24px; cursor: pointer;" class="normal-icon" type="vertical-align-top" @click="setFirstOutbound(row.id)"></a-icon>
                                 </a-tooltip>
@@ -184,7 +184,7 @@
                                 <a-dropdown :trigger="['click']">
                                     <a-icon @click="e => e.preventDefault()" type="ellipsis" style="font-size: 20px;"></a-icon>
                                     <a-menu slot="overlay" :theme="themeSwitcher.currentTheme">
-                                        <a-menu-item v-if="index > 0" @click="setFirstOutbound(row.id)">
+                                        <a-menu-item v-if="!isFirstOutbound(row)" @click="setFirstOutbound(row.id)">
                                             <a-icon style="font-size: 14px;" type="vertical-align-top"></a-icon>
                                             {{ i18n "pages.xray.rules.first" }}
                                         </a-menu-item>
@@ -364,6 +364,15 @@
                     this.onlineOutbounds = msg.obj != null ? msg.obj : [];
                 }
             },
+            async getDefaultSettings() {
+                const msg = await HttpUtil.post('/xui/setting/defaultSettings');
+                if (msg.success && msg.obj) {
+                    this.pageSize = msg.obj.pageSize || 0;
+                }
+            },
+            isFirstOutbound(row) {
+                return this.dbOutbounds.length > 0 && this.dbOutbounds[0].id === row.id;
+            },
             async getClientReverseTags() {
                 const msg = await HttpUtil.post('/xui/outbound/reverseTags');
                 if (msg.success) {
@@ -389,11 +398,7 @@
                     list = list.filter(o => this.isOutboundOnline(o.tag));
                 }
                 if (this.searchKey) {
-                    const key = this.searchKey.toLowerCase();
-                    list = list.filter(o =>
-                        o.tag.toLowerCase().includes(key) ||
-                        o.protocol.toLowerCase().includes(key)
-                    );
+                    list = list.filter(o => ObjectUtil.deepSearch(o, this.searchKey));
                 }
                 this.searchedOutbounds = list;
             },
@@ -401,7 +406,9 @@
                 this.applyOutboundFilter();
             },
             toggleFilter() {
-                if (!this.enableFilter) {
+                if (this.enableFilter) {
+                    this.searchKey = '';
+                } else {
                     this.filterBy = '';
                 }
                 this.filterOutbounds();
@@ -657,6 +664,7 @@
             window.addEventListener('resize', this.onResize);
             this.onResize();
             this.loading();
+            this.getDefaultSettings();
             this.getClientReverseTags();
             if (this.isRefreshEnabled) {
                 this.startDataRefreshLoop();

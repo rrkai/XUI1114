@@ -481,6 +481,8 @@
 "outboundTag" = "出站标签"
 
 [pages.settings]
+language = "语言"
+telegramBotLanguage = "Telegram 机器人语言"
 "title" = "设置"
 "save" = "保存配置"
 "infoDesc" = "此处的所有更改都需要保存并重启面板才能生效"
@@ -503,7 +505,7 @@
 "panelUrlPath" = "面板 url 根路径"
 "panelUrlPathDesc" = "必须以 '/' 开头，以 '/' 结尾"
 "pageSize" = "分页大小"
-"pageSizeDesc" = "定义入站表的页面大小。设置 0 表示禁用"
+"pageSizeDesc" = "定义入站/出站列表的页面大小。设置 0 表示禁用"
 "remarkModel" = "备注模型和分隔符"
 "sampleRemark" = "备注示例"
 "oldUsername" = "原用户名"
