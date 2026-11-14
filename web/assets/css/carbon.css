@@ -372,6 +372,10 @@
     box-shadow: var(--cb-shadow);
 }
 
+.carbon-dash .ant-card-hoverable {
+    margin-inline: 0 !important;
+}
+
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
     .carbon-dash .ant-card {
         -webkit-backdrop-filter: blur(16px) saturate(150%);
@@ -539,30 +543,36 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px 26px;
+    gap: 12px 34px;
 }
 
 .cb-meta {
     display: flex;
     flex-direction: column;
-    line-height: 1.3;
+    line-height: 1.25;
     min-width: 0;
 }
 
 .cb-meta-label {
     color: var(--cb-text-2);
-    font-size: 11.5px;
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: .05em;
 }
 
 .cb-meta-val {
+    margin-top: 2px;
     color: var(--cb-text);
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    font-variant-numeric: tabular-nums;
 }
 
 .cb-meta-val.cb-ip6 {
     display: block;
-    max-width: 22ch;
+    max-width: 26ch;
+    font-size: 16px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1116,8 +1126,13 @@
         gap: 8px 14px;
     }
 
+    .cb-meta-val {
+        font-size: 15.5px;
+    }
+
     .cb-meta-val.cb-ip6 {
         max-width: 15ch;
+        font-size: 14px;
     }
 
     .cb-rate-value {
