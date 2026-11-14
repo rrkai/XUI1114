@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/alireza0/x-ui/util/common"
+	"github.com/alireza0/x-ui/util/cronspec"
 )
 
 type Msg struct {
@@ -115,6 +116,10 @@ func (s *AllSetting) CheckValid() error {
 	}
 	if !strings.HasSuffix(s.SubJsonPath, "/") {
 		s.SubJsonPath += "/"
+	}
+
+	if _, err := cronspec.Parse(s.TgRunTime); err != nil {
+		return err
 	}
 
 	_, err := time.LoadLocation(s.TimeLocation)

@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/alireza0/x-ui/config"
@@ -21,11 +22,30 @@ import (
 )
 
 var (
+	tgbotMu   sync.RWMutex
 	bot       *tgbotapi.BotAPI
 	adminIds  []int64
 	isRunning bool
 	hostname  string
 )
+
+func getBot() *tgbotapi.BotAPI {
+	tgbotMu.RLock()
+	defer tgbotMu.RUnlock()
+	return bot
+}
+
+func getAdminIds() []int64 {
+	tgbotMu.RLock()
+	defer tgbotMu.RUnlock()
+	return append([]int64(nil), adminIds...)
+}
+
+func getHostname() string {
+	tgbotMu.RLock()
+	defer tgbotMu.RUnlock()
+	return hostname
+}
 
 type LoginStatus byte
 
@@ -69,40 +89,56 @@ func (t *Tgbot) Start(i18nFS embed.FS) error {
 	}
 
 	if tgBotid != "" {
+		var ids []int64
 		for _, adminId := range strings.Split(tgBotid, ",") {
 			id, err := strconv.Atoi(adminId)
 			if err != nil {
 				logger.Warning("Failed to get IDs from GetTgBotChatId:", err)
 				return err
 			}
-			adminIds = append(adminIds, int64(id))
+			ids = append(ids, int64(id))
 		}
+		tgbotMu.Lock()
+		adminIds = ids
+		tgbotMu.Unlock()
+	} else {
+		tgbotMu.Lock()
+		adminIds = nil
+		tgbotMu.Unlock()
 	}
 
 	for {
-		bot, err = tgbotapi.NewBotAPI(tgBottoken)
+		newBot, err := tgbotapi.NewBotAPI(tgBottoken)
 		if err != nil {
 			fmt.Println("Get tgbot's api error:", err)
 			fmt.Println("Retrying after 10 secound...")
 			time.Sleep(10 * time.Second)
 		} else {
+			newBot.Debug = false
+			tgbotMu.Lock()
+			bot = newBot
+			tgbotMu.Unlock()
 			fmt.Println("Tgbot connected!")
 			break
 		}
 	}
-	bot.Debug = false
 
 	// listen for TG bot income messages
-	if !isRunning {
+	tgbotMu.Lock()
+	alreadyRunning := isRunning
+	isRunning = true
+	tgbotMu.Unlock()
+	if !alreadyRunning {
 		logger.Info("Starting Telegram receiver ...")
 		go t.OnReceive()
-		isRunning = true
 	}
 
 	return nil
 }
 
 func (t *Tgbot) IsRunning() bool {
+	tgbotMu.RLock()
+	defer tgbotMu.RUnlock()
 	return isRunning
 }
 
@@ -110,28 +146,43 @@ func (t *Tgbot) SetHostname() {
 	host, err := os.Hostname()
 	if err != nil {
 		logger.Error("get hostname error:", err)
-		hostname = ""
-		return
+		host = ""
 	}
+	tgbotMu.Lock()
 	hostname = host
+	tgbotMu.Unlock()
 }
 
 func (t *Tgbot) Stop() {
-	bot.StopReceivingUpdates()
+	if currentBot := getBot(); currentBot != nil {
+		currentBot.StopReceivingUpdates()
+	}
 	logger.Info("Stop Telegram receiver ...")
+	tgbotMu.Lock()
 	isRunning = false
+	bot = nil
 	adminIds = nil
+	tgbotMu.Unlock()
 }
 
 func (t *Tgbot) OnReceive() {
+	currentBot := getBot()
+	if currentBot == nil {
+		logger.Warning("Telegram bot is not initialized")
+		return
+	}
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 10
 
-	updates := bot.GetUpdatesChan(u)
+	updates := currentBot.GetUpdatesChan(u)
 
 	for update := range updates {
-		tgId := update.FromChat().ID
-		chatId := update.FromChat().ChatConfig().ChatID
+		updateChat := update.FromChat()
+		if updateChat == nil {
+			continue
+		}
+		tgId := updateChat.ID
+		chatId := updateChat.ChatConfig().ChatID
 		isAdmin := checkAdmin(tgId)
 		if update.Message == nil {
 			if update.CallbackQuery != nil {
@@ -158,7 +209,7 @@ func (t *Tgbot) answerCommand(message *tgbotapi.Message, chatId int64, isAdmin b
 	case "start":
 		msg += t.I18nBot("tgbot.commands.start", "Firstname=="+message.From.FirstName)
 		if isAdmin {
-			msg += t.I18nBot("tgbot.commands.welcome", "Hostname=="+hostname)
+			msg += t.I18nBot("tgbot.commands.welcome", "Hostname=="+getHostname())
 		}
 		msg += "\n\n" + t.I18nBot("tgbot.commands.pleaseChoose")
 	case "status":
@@ -200,7 +251,11 @@ func (t *Tgbot) answerCallback(callbackQuery *tgbotapi.CallbackQuery) {
 	// Respond to the callback query, telling Telegram to show the user
 	// a message with the data received.
 	callback := tgbotapi.NewCallback(callbackQuery.ID, callbackQuery.Data)
-	if _, err := bot.Request(callback); err != nil {
+	currentBot := getBot()
+	if currentBot == nil {
+		return
+	}
+	if _, err := currentBot.Request(callback); err != nil {
 		logger.Warning(err)
 	}
 
@@ -222,14 +277,14 @@ func (t *Tgbot) answerCallback(callbackQuery *tgbotapi.CallbackQuery) {
 	case "commands":
 		t.SendMsgToTgbot(callbackQuery.From.ID, t.I18nBot("tgbot.commands.helpAdminCommands"))
 	default:
-		if callbackQuery.Data[:7] == "client_" {
+		if strings.HasPrefix(callbackQuery.Data, "client_") {
 			t.searchClient(callbackQuery.From.ID, callbackQuery.Data[7:])
 		}
 	}
 }
 
 func checkAdmin(tgId int64) bool {
-	for _, adminId := range adminIds {
+	for _, adminId := range getAdminIds() {
 		if adminId == tgId {
 			return true
 		}
@@ -269,7 +324,7 @@ func (t *Tgbot) SendAnswer(chatId int64, msg string, isAdmin bool) {
 }
 
 func (t *Tgbot) SendMsgToTgbot(tgid int64, msg string, replyMarkup ...tgbotapi.InlineKeyboardMarkup) {
-	if !isRunning {
+	if !t.IsRunning() {
 		return
 	}
 
@@ -297,13 +352,17 @@ func (t *Tgbot) SendMsgToTgbot(tgid int64, msg string, replyMarkup ...tgbotapi.I
 	} else {
 		allMessages = append(allMessages, msg)
 	}
+	currentBot := getBot()
+	if currentBot == nil {
+		return
+	}
 	for _, message := range allMessages {
 		info := tgbotapi.NewMessage(tgid, message)
 		info.ParseMode = "HTML"
 		if len(replyMarkup) > 0 {
 			info.ReplyMarkup = replyMarkup[0]
 		}
-		_, err := bot.Send(info)
+		_, err := currentBot.Send(info)
 		if err != nil {
 			logger.Warning("Error sending telegram message :", err)
 		}
@@ -312,7 +371,7 @@ func (t *Tgbot) SendMsgToTgbot(tgid int64, msg string, replyMarkup ...tgbotapi.I
 }
 
 func (t *Tgbot) SendMsgToTgbotAdmins(msg string) {
-	for _, adminId := range adminIds {
+	for _, adminId := range getAdminIds() {
 		t.SendMsgToTgbot(adminId, msg)
 	}
 }
@@ -342,14 +401,14 @@ func (t *Tgbot) SendBackupToAdmins() {
 	if !t.IsRunning() {
 		return
 	}
-	for _, adminId := range adminIds {
+	for _, adminId := range getAdminIds() {
 		t.sendBackup(int64(adminId))
 	}
 }
 
 func (t *Tgbot) getServerUsage() string {
 	info, ipv4, ipv6 := "", "", ""
-	info += t.I18nBot("tgbot.messages.hostname", "Hostname=="+hostname)
+	info += t.I18nBot("tgbot.messages.hostname", "Hostname=="+getHostname())
 	info += t.I18nBot("tgbot.messages.version", "Version=="+config.GetVersion())
 
 	// get ip address
@@ -414,7 +473,7 @@ func (t *Tgbot) UserLoginNotify(username string, ip string, time string, status 
 	case LoginFail:
 		msg += t.I18nBot("tgbot.messages.loginFailed")
 	}
-	msg += t.I18nBot("tgbot.messages.hostname", "Hostname=="+hostname)
+	msg += t.I18nBot("tgbot.messages.hostname", "Hostname=="+getHostname())
 	msg += t.I18nBot("tgbot.messages.username", "Username=="+username)
 	msg += t.I18nBot("tgbot.messages.ip", "IP=="+ip)
 	msg += t.I18nBot("tgbot.messages.time", "Time=="+time)
@@ -701,6 +760,10 @@ func (t *Tgbot) sendBackup(chatId int64) {
 	if !t.IsRunning() {
 		return
 	}
+	currentBot := getBot()
+	if currentBot == nil {
+		return
+	}
 
 	// Update by manually trigger a checkpoint operation
 	err := database.Checkpoint()
@@ -713,14 +776,14 @@ func (t *Tgbot) sendBackup(chatId int64) {
 
 	file := tgbotapi.FilePath(config.GetDBPath())
 	msg := tgbotapi.NewDocument(chatId, file)
-	_, err = bot.Send(msg)
+	_, err = currentBot.Send(msg)
 	if err != nil {
 		logger.Warning("Error in uploading backup: ", err)
 	}
 
 	file = tgbotapi.FilePath(xray.GetConfigPath())
 	msg = tgbotapi.NewDocument(chatId, file)
-	_, err = bot.Send(msg)
+	_, err = currentBot.Send(msg)
 	if err != nil {
 		logger.Warning("Error in uploading config.json: ", err)
 	}

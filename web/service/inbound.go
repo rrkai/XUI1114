@@ -171,6 +171,9 @@ func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, boo
 	if existEmail != "" {
 		return inbound, false, common.NewError("Duplicate email:", existEmail)
 	}
+	if err = xray.CheckShadowsocks2022Keys(string(inbound.Protocol), inbound.Settings); err != nil {
+		return inbound, false, err
+	}
 
 	clients, err := s.GetClients(inbound)
 	if err != nil {
@@ -304,6 +307,9 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) (*model.Inbound, 
 	}
 	if exist {
 		return inbound, false, common.NewError("Port already exists:", inbound.Port)
+	}
+	if err = xray.CheckShadowsocks2022Keys(string(inbound.Protocol), inbound.Settings); err != nil {
+		return inbound, false, err
 	}
 
 	oldInbound, err := s.GetInbound(inbound.Id)
@@ -497,6 +503,9 @@ func (s *InboundService) AddInboundClient(data *model.Inbound) (bool, error) {
 	}
 
 	oldInbound.Settings = string(newSettings)
+	if err = xray.CheckShadowsocks2022Keys(string(oldInbound.Protocol), oldInbound.Settings); err != nil {
+		return false, err
+	}
 
 	db := database.GetDB()
 	tx := db.Begin()
@@ -717,6 +726,9 @@ func (s *InboundService) UpdateInboundClient(data *model.Inbound, clientId strin
 	}
 
 	oldInbound.Settings = string(newSettings)
+	if err = xray.CheckShadowsocks2022Keys(string(oldInbound.Protocol), oldInbound.Settings); err != nil {
+		return false, err
+	}
 	db := database.GetDB()
 	tx := db.Begin()
 

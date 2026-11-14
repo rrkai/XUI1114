@@ -151,12 +151,20 @@ func (s *SubJsonService) getConfig(inbound *model.Inbound, client model.Client, 
 	delete(stream, "externalProxy")
 
 	for _, ep := range externalProxies {
-		extPrxy := ep.(map[string]interface{})
-		inbound.Listen = extPrxy["dest"].(string)
-		inbound.Port = int(extPrxy["port"].(float64))
+		extPrxy, ok := ep.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		dest := jsonString(extPrxy, "dest")
+		port := int(jsonFloat(extPrxy, "port"))
+		if dest == "" || port <= 0 || port > 65535 {
+			continue
+		}
+		inbound.Listen = dest
+		inbound.Port = port
 		newStream := stream
 		var newOutbounds []json_util.RawMessage
-		switch extPrxy["forceTls"].(string) {
+		switch jsonString(extPrxy, "forceTls") {
 		case "tls":
 			if newStream["security"] != "tls" {
 				newStream["security"] = "tls"
@@ -169,7 +177,10 @@ func (s *SubJsonService) getConfig(inbound *model.Inbound, client model.Client, 
 			}
 		}
 		if newStream["security"] != "none" {
-			newTlsSettings := newStream["tlsSettings"].(map[string]interface{})
+			newTlsSettings := jsonMap(newStream, "tlsSettings")
+			if newTlsSettings == nil {
+				newTlsSettings = map[string]interface{}{}
+			}
 			if utlsValue, ok := extPrxy["utls"].(string); ok && len(utlsValue) > 0 {
 				newTlsSettings["fingerprint"] = utlsValue
 			}
@@ -208,7 +219,7 @@ func (s *SubJsonService) getConfig(inbound *model.Inbound, client model.Client, 
 			newConfigJson[key] = value
 		}
 		newConfigJson["outbounds"] = newOutbounds
-		newConfigJson["remarks"] = s.SubService.genRemark(inbound, client.Email, extPrxy["remark"].(string))
+		newConfigJson["remarks"] = s.SubService.genRemark(inbound, client.Email, jsonString(extPrxy, "remark"))
 
 		newConfig, _ := json.MarshalIndent(newConfigJson, "", "  ")
 		newJsonArray = append(newJsonArray, newConfig)
@@ -220,12 +231,15 @@ func (s *SubJsonService) getConfig(inbound *model.Inbound, client model.Client, 
 func (s *SubJsonService) streamData(stream string) map[string]any {
 	var streamSettings map[string]any
 	json.Unmarshal([]byte(stream), &streamSettings)
+	if streamSettings == nil {
+		streamSettings = map[string]any{}
+	}
 	security, _ := streamSettings["security"].(string)
 	switch security {
 	case "tls":
-		streamSettings["tlsSettings"] = s.tlsData(streamSettings["tlsSettings"].(map[string]interface{}))
+		streamSettings["tlsSettings"] = s.tlsData(jsonMap(streamSettings, "tlsSettings"))
 	case "reality":
-		streamSettings["realitySettings"] = s.realityData(streamSettings["realitySettings"].(map[string]interface{}))
+		streamSettings["realitySettings"] = s.realityData(jsonMap(streamSettings, "realitySettings"))
 	}
 	delete(streamSettings, "sockopt")
 
@@ -282,18 +296,8 @@ func (s *SubJsonService) realityData(rData map[string]interface{}) map[string]in
 
 	// Set random data
 	rltyData["spiderX"] = "/" + random.Seq(15)
-	shortIds, ok := rData["shortIds"].([]interface{})
-	if ok && len(shortIds) > 0 {
-		rltyData["shortId"] = shortIds[random.Num(len(shortIds))].(string)
-	} else {
-		rltyData["shortId"] = ""
-	}
-	serverNames, ok := rData["serverNames"].([]interface{})
-	if ok && len(serverNames) > 0 {
-		rltyData["serverName"] = serverNames[random.Num(len(serverNames))].(string)
-	} else {
-		rltyData["serverName"] = ""
-	}
+	rltyData["shortId"] = randomJSONString(rData["shortIds"])
+	rltyData["serverName"] = randomJSONString(rData["serverNames"])
 
 	return rltyData
 }
@@ -339,7 +343,7 @@ func (s *SubJsonService) genOutbound(inbound *model.Inbound, streamSettings map[
 		}
 	case model.Hysteria:
 		settings["version"] = inboundSettings["version"]
-		hyStream := streamSettings["hysteriaSettings"].(map[string]any)
+		hyStream := jsonMap(streamSettings, "hysteriaSettings")
 		outHyStream := map[string]any{
 			"version": inboundSettings["version"],
 			"auth":    client.Auth,

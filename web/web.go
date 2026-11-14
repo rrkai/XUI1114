@@ -18,6 +18,7 @@ import (
 	"github.com/alireza0/x-ui/iplimit"
 	"github.com/alireza0/x-ui/logger"
 	"github.com/alireza0/x-ui/util/common"
+	"github.com/alireza0/x-ui/util/cronspec"
 	"github.com/alireza0/x-ui/web/controller"
 	"github.com/alireza0/x-ui/web/job"
 	"github.com/alireza0/x-ui/web/locale"
@@ -259,10 +260,15 @@ func (s *Server) startTask(ipLimitCron bool) {
 			runtime = "@daily"
 		}
 		logger.Infof("Tg notify enabled,run at %s", runtime)
-		_, err = s.cron.AddJob(runtime, job.NewStatsNotifyJob())
+		// The scheduler requires a seconds field, so parse the admin-supplied
+		// schedule here to accept standard five-field crontab too.
+		schedule, err := cronspec.Parse(runtime)
 		if err != nil {
-			logger.Warning("Add NewStatsNotifyJob error", err)
-			return
+			logger.Warning("Add NewStatsNotifyJob error, will run default:", err)
+			schedule, _ = cronspec.Parse("@daily")
+		}
+		if schedule != nil {
+			s.cron.Schedule(schedule, job.NewStatsNotifyJob())
 		}
 
 		// Check CPU load and alarm to TgBot if threshold passes
