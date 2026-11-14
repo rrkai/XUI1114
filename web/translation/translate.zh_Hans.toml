@@ -64,7 +64,7 @@
 "importInvalid" = "导入数据无效"
 
 [menu]
-"dashboard" = "概述"
+"dashboard" = "仪表台"
 "inbounds" = "入站列表"
 "outbounds" = "出站列表"
 "routing" = "路由"

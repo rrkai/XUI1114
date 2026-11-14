@@ -38,7 +38,7 @@
             <transition name="list" appear>
                 <div class="cb-hero-bar">
                     <div class="cb-hero-id">
-                        <span class="cb-hero-logo">X</span>
+                        <img class="cb-hero-logo" src="{{ .base_path }}assets/img/xgo.png?{{ .cur_ver }}" alt="X-UI">
                         <div class="cb-hero-text">
                             <div class="cb-hero-title">
                                 <span class="cb-hero-title-text">[[ status.hostInfo.hostname || 'X-UI' ]]</span>
@@ -197,7 +197,7 @@
                 <a-col :xs="24" :sm="12" :md="6">
                     <a-card hoverable>
                         <strong>{{ i18n "pages.inbounds.stream.tcp.version" }}:</strong>
-                        <a href="https://github.com/alireza0/x-ui/releases" target="_blank">
+                        <a href="https://github.com/rrkai/XUI1114/releases" target="_blank">
                             <a-tag color="purple" style="cursor: pointer;">X-UI {{ .cur_ver }}</a-tag>
                         </a>
                         <a-tooltip title='{{ i18n "pages.index.xraySwitch" }}'>

@@ -1,16 +1,11 @@
 {{define "menuItems"}}
 <div class="cb-brand">
-    <span class="cb-brand-logo">X</span>
+    <img class="cb-brand-logo" src="{{ .base_path }}assets/img/xgo.png?{{ .cur_ver }}" alt="X-UI">
     <span class="cb-brand-text">
         <strong>X-UI</strong>
         <small>v{{ .cur_ver }}</small>
     </span>
     <span class="cb-brand-side">
-        <a-tooltip title="Donate">
-            <a-icon type="heart"
-                @click="window.open('https://donate.alireza0.dev', '_blank')">
-            </a-icon>
-        </a-tooltip>
         <theme-switch />
     </span>
 </div>

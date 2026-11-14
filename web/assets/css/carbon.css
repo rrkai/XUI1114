@@ -172,19 +172,13 @@
 }
 
 .cb-brand-logo {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     flex: none;
     width: 38px;
     height: 38px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #4f5bea, #8b5cf6);
-    color: #fff;
-    font-size: 19px;
-    font-weight: 800;
-    letter-spacing: -.02em;
-    box-shadow: 0 6px 16px -6px rgba(79, 91, 234, .6);
+    object-fit: contain;
+    filter: drop-shadow(0 6px 16px rgba(79, 91, 234, .45));
 }
 
 .cb-brand-text {
@@ -700,19 +694,13 @@
 }
 
 .cb-hero-logo {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     flex: none;
     width: 52px;
     height: 52px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #4f5bea, #8b5cf6);
-    color: #fff;
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -.02em;
-    box-shadow: 0 8px 20px -8px rgba(79, 91, 234, .7);
+    object-fit: contain;
+    filter: drop-shadow(0 8px 20px rgba(79, 91, 234, .5));
 }
 
 .cb-hero-text {
@@ -1351,7 +1339,6 @@
         width: 44px;
         height: 44px;
         border-radius: 13px;
-        font-size: 22px;
     }
 
     .cb-hero-title {
