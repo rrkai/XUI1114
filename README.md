@@ -43,10 +43,10 @@
 bash <(curl -Ls https://raw.githubusercontent.com/rrkai/XUI1114/main/install.sh)
 ```
 
-安装指定版本（用本仓库的 Release tag）：
+安装指定版本（版本号格式如 `v1.11.4-1`；不指定版本时安装 `releases/latest`）：
 
 ```sh
-VERSION=v1.11.4-custom1 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/XUI1114/main/install.sh) $VERSION
+VERSION=v1.11.4-1 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/XUI1114/main/install.sh) $VERSION
 ```
 
 - 安装脚本从本仓库的 `releases/latest` 下载 `x-ui-linux-<arch>.tar.gz`。
