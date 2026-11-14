@@ -145,6 +145,9 @@
 "unitMinutes" = "分钟"
 "unitSeconds" = "秒"
 "trafficRank" = "流量排行"
+"remainingTraffic" = "剩余流量"
+"remainingNone" = "暂无有限流量客户端"
+"exhausted" = "已用尽"
 "rankToday" = "今日"
 "rankYesterday" = "昨日"
 "rankEmpty" = "暂无数据，按日统计从升级后开始累计"
@@ -152,10 +155,6 @@
 "expireNone" = "暂无启用中的到期客户端"
 "expired" = "已过期"
 "expiresToday" = "今日到期"
-"resetCountdown" = "流量重置倒数"
-"resetNone" = "暂无自动重置流量的客户端"
-"resetsToday" = "今日重置"
-"period" = "周期"
 
 [pages.inbounds]
 "title" = "入站列表"

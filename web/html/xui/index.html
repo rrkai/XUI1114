@@ -257,9 +257,6 @@
                                     <span class="up">↑ [[ sizeFormat(item.up) ]]</span>
                                     <span class="down">↓ [[ sizeFormat(item.down) ]]</span>
                                 </span>
-                                <span class="cb-rank-bar">
-                                    <span class="cb-rank-bar-fill" :style="{ width: rankBarWidth(item) }"></span>
-                                </span>
                                 <span class="cb-rank-size">[[ sizeFormat(item.total) ]]</span>
                             </div>
                         </div>
@@ -285,17 +282,16 @@
                 <a-col :xs="24" :md="6">
                     <a-card class="cb-rank-card cb-exp-card">
                         <div class="cb-card-head">
-                            <span class="cb-card-title">{{ i18n "pages.index.resetCountdown" }}</span>
+                            <span class="cb-card-title">{{ i18n "pages.index.remainingTraffic" }}</span>
                         </div>
-                        <div class="cb-rank-list" v-if="resetItems.length">
-                            <div class="cb-rank-item" v-for="item in resetItems" :key="item.email">
-                                <span class="cb-exp-ico"><a-icon type="history"></a-icon></span>
+                        <div class="cb-rank-list" v-if="remainingItems.length">
+                            <div class="cb-rank-item" v-for="item in remainingItems" :key="item.email">
+                                <span class="cb-exp-ico"><a-icon type="database"></a-icon></span>
                                 <span class="cb-rank-email" :title="item.email">[[ item.email ]]</span>
-                                <span class="cb-exp-chip">[[ resetPeriodText(item) ]]</span>
-                                <span class="cb-exp-chip" :class="expiryChipClass(item)">[[ resetDaysText(item) ]]</span>
+                                <span class="cb-exp-chip" :class="remainingChipClass(item)">[[ remainingText(item) ]]</span>
                             </div>
                         </div>
-                        <div class="cb-rank-empty" v-else>{{ i18n "pages.index.resetNone" }}</div>
+                        <div class="cb-rank-empty" v-else>{{ i18n "pages.index.remainingNone" }}</div>
                     </a-card>
                 </a-col>
             </a-row>
@@ -569,7 +565,7 @@
             rankTab: 'today',
             rank: {today: [], yesterday: []},
             expiryItems: [],
-            resetItems: [],
+            remainingItems: [],
             i18nOnline: '{{ i18n "pages.index.online" }}',
             i18nOffline: '{{ i18n "pages.index.offline" }}',
             i18nError: '{{ i18n "pages.index.error" }}',
@@ -583,8 +579,7 @@
             },
             expiredText: '{{ i18n "pages.index.expired" }}',
             expiresTodayText: '{{ i18n "pages.index.expiresToday" }}',
-            resetsTodayText: '{{ i18n "pages.index.resetsToday" }}',
-            periodText: '{{ i18n "pages.index.period" }}',
+            exhaustedText: '{{ i18n "pages.index.exhausted" }}',
         },
         computed: {
             xrayStateLabel() {
@@ -616,9 +611,6 @@
             },
             rankItems() {
                 return this.rank[this.rankTab] || [];
-            },
-            rankMax() {
-                return this.rankItems.reduce((max, item) => Math.max(max, Number(item.total) || 0), 0);
             },
             trafficChart() {
                 const points = this.trafficHistory;
@@ -684,13 +676,6 @@
                     console.error(e);
                 }
             },
-            rankBarWidth(item) {
-                const max = this.rankMax;
-                if (!max) {
-                    return '0%';
-                }
-                return Math.max(2, Number(item.total) / max * 100).toFixed(1) + '%';
-            },
             async getClientExpiry() {
                 try {
                     const msg = await HttpUtil.get('/server/clientExpiry');
@@ -701,27 +686,30 @@
                     console.error(e);
                 }
             },
-            async getResetCountdown() {
+            async getRemainingTraffic() {
                 try {
-                    const msg = await HttpUtil.get('/server/resetCountdown');
+                    const msg = await HttpUtil.get('/server/remainingTraffic');
                     if (msg.success && msg.obj) {
-                        this.resetItems = msg.obj;
+                        this.remainingItems = msg.obj;
                     }
                 } catch (e) {
                     console.error(e);
                 }
             },
-            resetPeriodText(item) {
-                return this.periodText + ' ' + item.resetDays + ' ' + this.uptimeUnits.d;
+            remainingChipClass(item) {
+                if (item.remaining <= 0) {
+                    return 'bad';
+                }
+                if (item.percent <= 10) {
+                    return 'warn';
+                }
+                return '';
             },
-            resetDaysText(item) {
-                if (item.daysLeft < 0) {
-                    return this.expiredText;
+            remainingText(item) {
+                if (item.remaining <= 0) {
+                    return this.exhaustedText;
                 }
-                if (item.daysLeft === 0) {
-                    return this.resetsTodayText;
-                }
-                return item.daysLeft + ' ' + this.uptimeUnits.d;
+                return sizeFormat(item.remaining);
             },
             expiryChipClass(item) {
                 if (item.daysLeft < 0) {
@@ -941,7 +929,7 @@
             }
             this.getTrafficRank();
             this.getClientExpiry();
-            this.getResetCountdown();
+            this.getRemainingTraffic();
             let tick = 0;
             while (true) {
                 try {
@@ -952,7 +940,7 @@
                 if (++tick % 15 === 0) {
                     this.getTrafficRank();
                     this.getClientExpiry();
-                    this.getResetCountdown();
+                    this.getRemainingTraffic();
                 }
                 await PromiseUtil.sleep(2000);
             }

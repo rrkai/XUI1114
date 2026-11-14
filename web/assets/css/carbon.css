@@ -544,22 +544,6 @@
     font-weight: 500;
 }
 
-.cb-rank-bar {
-    flex: 1 1 40px;
-    min-width: 40px;
-    height: 6px;
-    border-radius: 3px;
-    background: var(--cb-fill);
-    overflow: hidden;
-}
-
-.cb-rank-bar-fill {
-    display: block;
-    height: 100%;
-    border-radius: 3px;
-    background: linear-gradient(90deg, var(--cb-blue), var(--cb-purple));
-}
-
 .cb-rank-size {
     flex: none;
     min-width: 74px;
@@ -593,6 +577,7 @@
 .cb-rank-io {
     flex: none;
     display: inline-flex;
+    margin-left: auto;
     gap: 14px;
     color: var(--cb-text-2);
     font-size: 12px;
@@ -1376,10 +1361,6 @@
 
     .cb-rank-email {
         max-width: 12ch;
-    }
-
-    .cb-rank-bar {
-        display: none;
     }
 
     .cb-rank-io {

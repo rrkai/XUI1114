@@ -145,6 +145,9 @@
 "unitMinutes" = "m"
 "unitSeconds" = "s"
 "trafficRank" = "Traffic Ranking"
+"remainingTraffic" = "Remaining Traffic"
+"remainingNone" = "No clients with a limited quota"
+"exhausted" = "Exhausted"
 "rankToday" = "Today"
 "rankYesterday" = "Yesterday"
 "rankEmpty" = "No data yet — daily totals accumulate from this update on"
@@ -152,10 +155,6 @@
 "expireNone" = "No clients with an expiry date"
 "expired" = "Expired"
 "expiresToday" = "Expires today"
-"resetCountdown" = "Reset Countdown"
-"resetNone" = "No clients with auto reset"
-"resetsToday" = "Resets today"
-"period" = "Every"
 
 [pages.inbounds]
 "title" = "Inbounds"

@@ -894,48 +894,42 @@ func (s *ServerService) GetClientExpiry(limit int) ([]ClientExpiryItem, error) {
 	return items, nil
 }
 
-type ResetCountdownItem struct {
-	Email      string `json:"email"`
-	ResetDays  int    `json:"resetDays"`
-	ExpiryTime int64  `json:"expiryTime"`
-	DaysLeft   int    `json:"daysLeft"`
+type RemainingTrafficItem struct {
+	Email     string  `json:"email"`
+	Total     int64   `json:"total"`
+	Used      int64   `json:"used"`
+	Remaining int64   `json:"remaining"`
+	Percent   float64 `json:"percent"`
 }
 
-func (s *ServerService) GetResetCountdown(limit int) ([]ResetCountdownItem, error) {
+func (s *ServerService) GetRemainingTraffic(limit int) ([]RemainingTrafficItem, error) {
 	db := database.GetDB()
 	rows := make([]xray.ClientTraffic, 0, 64)
 	err := db.Model(&xray.ClientTraffic{}).
-		Select("email, reset, expiry_time").
-		Where("reset > 0 AND expiry_time <> 0").
+		Select("email, total, up, down").
+		Where("total > 0").
+		Order("(total - up - down) ASC").
+		Limit(limit).
 		Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
 
-	nowMs := time.Now().UnixMilli()
-	items := make([]ResetCountdownItem, 0, len(rows))
+	items := make([]RemainingTrafficItem, 0, len(rows))
 	for _, row := range rows {
-		expiry := row.ExpiryTime
-		if expiry < 0 {
-			expiry = nowMs - expiry
+		used := row.Up + row.Down
+		remaining := row.Total - used
+		percent := 0.0
+		if row.Total > 0 {
+			percent = float64(remaining) / float64(row.Total) * 100
 		}
-		daysLeft := -1
-		if expiry > nowMs {
-			daysLeft = int((expiry - nowMs) / (24 * 3600 * 1000))
-		}
-		items = append(items, ResetCountdownItem{
-			Email:      row.Email,
-			ResetDays:  row.Reset,
-			ExpiryTime: expiry,
-			DaysLeft:   daysLeft,
+		items = append(items, RemainingTrafficItem{
+			Email:     row.Email,
+			Total:     row.Total,
+			Used:      used,
+			Remaining: remaining,
+			Percent:   percent,
 		})
-	}
-
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].ExpiryTime < items[j].ExpiryTime
-	})
-	if len(items) > limit {
-		items = items[:limit]
 	}
 	return items, nil
 }
