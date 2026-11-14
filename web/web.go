@@ -250,6 +250,9 @@ func (s *Server) startTask(ipLimitCron bool) {
 		s.cron.AddJob("@every 10s", job.NewXrayTrafficJob())
 	}()
 
+	// Prune daily traffic buckets older than 90 days on the 1st of each month at 05:00
+	s.cron.AddJob("0 0 5 1 * *", job.NewClientTrafficDailyCleanupJob())
+
 	// Make a traffic condition every day, 8:30
 	var entry cron.EntryID
 	isTgbotenabled, err := s.settingService.GetTgbotenabled()
