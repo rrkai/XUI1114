@@ -152,6 +152,10 @@
 "expireNone" = "No clients with an expiry date"
 "expired" = "Expired"
 "expiresToday" = "Expires today"
+"resetCountdown" = "Reset Countdown"
+"resetNone" = "No clients with auto reset"
+"resetsToday" = "Resets today"
+"period" = "Every"
 
 [pages.inbounds]
 "title" = "Inbounds"

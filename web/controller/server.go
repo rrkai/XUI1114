@@ -43,6 +43,7 @@ func (a *ServerController) initRouter(g *gin.RouterGroup) {
 	g.GET("/status", a.status)
 	g.GET("/trafficRank", a.trafficRank)
 	g.GET("/clientExpiry", a.clientExpiry)
+	g.GET("/resetCountdown", a.resetCountdown)
 	g.GET("/getDb", a.getDb)
 	g.GET("/getConfigJson", a.getConfigJson)
 	g.GET("/getNewmldsa65", a.getNewmldsa65)
@@ -90,6 +91,11 @@ func (a *ServerController) trafficRank(c *gin.Context) {
 
 func (a *ServerController) clientExpiry(c *gin.Context) {
 	items, err := a.serverService.GetClientExpiry(10)
+	jsonObj(c, items, err)
+}
+
+func (a *ServerController) resetCountdown(c *gin.Context) {
+	items, err := a.serverService.GetResetCountdown(10)
 	jsonObj(c, items, err)
 }
 

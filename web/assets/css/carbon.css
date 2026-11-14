@@ -581,6 +581,30 @@
     width: 100%;
 }
 
+.cb-exp-card .cb-rank-email {
+    flex: 1 1 auto;
+    max-width: none;
+}
+
+.cb-rank-io {
+    flex: none;
+    display: inline-flex;
+    gap: 14px;
+    color: var(--cb-text-2);
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.cb-rank-io .up {
+    color: var(--cb-green);
+}
+
+.cb-rank-io .down {
+    color: var(--cb-blue);
+}
+
 .cb-exp-ico {
     flex: none;
     width: 22px;
@@ -1348,16 +1372,29 @@
     }
 
     .cb-rank-email {
-        max-width: 14ch;
+        max-width: 12ch;
+    }
+
+    .cb-rank-bar {
+        display: none;
+    }
+
+    .cb-rank-io {
+        gap: 8px;
+        font-size: 11px;
     }
 
     .cb-rank-size {
-        min-width: 62px;
+        min-width: 56px;
     }
 
     .cb-exp-date {
         min-width: 0;
         font-size: 11.5px;
+    }
+
+    .cb-exp-period {
+        display: none;
     }
 
     .cb-stat-value {

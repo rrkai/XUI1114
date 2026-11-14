@@ -238,7 +238,7 @@
             </a-row>
 
             <a-row :gutter="16" class="cb-rank-row">
-                <a-col :xs="24" :md="12">
+                <a-col :span="24">
                     <a-card class="cb-rank-card">
                         <div class="cb-card-head">
                             <span class="cb-card-title">{{ i18n "pages.index.trafficRank" }}</span>
@@ -253,6 +253,10 @@
                             <div class="cb-rank-item" v-for="(item, index) in rankItems" :key="item.email">
                                 <span class="cb-rank-no" :class="'n' + (index + 1)">[[ index + 1 ]]</span>
                                 <span class="cb-rank-email" :title="item.email">[[ item.email ]]</span>
+                                <span class="cb-rank-io">
+                                    <span class="up">↑ [[ sizeFormat(item.up) ]]</span>
+                                    <span class="down">↓ [[ sizeFormat(item.down) ]]</span>
+                                </span>
                                 <span class="cb-rank-bar">
                                     <span class="cb-rank-bar-fill" :style="{ width: rankBarWidth(item) }"></span>
                                 </span>
@@ -262,7 +266,10 @@
                         <div class="cb-rank-empty" v-else>{{ i18n "pages.index.rankEmpty" }}</div>
                     </a-card>
                 </a-col>
-                <a-col :xs="24" :md="12">
+            </a-row>
+
+            <a-row :gutter="16" class="cb-rank-row">
+                <a-col :span="24">
                     <a-card class="cb-rank-card cb-exp-card">
                         <div class="cb-card-head">
                             <span class="cb-card-title">{{ i18n "pages.index.clientExpiry" }}</span>
@@ -276,6 +283,26 @@
                             </div>
                         </div>
                         <div class="cb-rank-empty" v-else>{{ i18n "pages.index.expireNone" }}</div>
+                    </a-card>
+                </a-col>
+            </a-row>
+
+            <a-row :gutter="16" class="cb-rank-row">
+                <a-col :span="24">
+                    <a-card class="cb-rank-card cb-exp-card">
+                        <div class="cb-card-head">
+                            <span class="cb-card-title">{{ i18n "pages.index.resetCountdown" }}</span>
+                        </div>
+                        <div class="cb-rank-list" v-if="resetItems.length">
+                            <div class="cb-rank-item" v-for="item in resetItems" :key="item.email">
+                                <span class="cb-exp-ico"><a-icon type="history"></a-icon></span>
+                                <span class="cb-rank-email" :title="item.email">[[ item.email ]]</span>
+                                <span class="cb-exp-chip cb-exp-period">[[ resetPeriodText(item) ]]</span>
+                                <span class="cb-exp-chip" :class="expiryChipClass(item)">[[ resetDaysText(item) ]]</span>
+                                <span class="cb-exp-date">[[ expiryDateText(item) ]]</span>
+                            </div>
+                        </div>
+                        <div class="cb-rank-empty" v-else>{{ i18n "pages.index.resetNone" }}</div>
                     </a-card>
                 </a-col>
             </a-row>
@@ -549,6 +576,7 @@
             rankTab: 'today',
             rank: {today: [], yesterday: []},
             expiryItems: [],
+            resetItems: [],
             i18nOnline: '{{ i18n "pages.index.online" }}',
             i18nOffline: '{{ i18n "pages.index.offline" }}',
             i18nError: '{{ i18n "pages.index.error" }}',
@@ -562,6 +590,8 @@
             },
             expiredText: '{{ i18n "pages.index.expired" }}',
             expiresTodayText: '{{ i18n "pages.index.expiresToday" }}',
+            resetsTodayText: '{{ i18n "pages.index.resetsToday" }}',
+            periodText: '{{ i18n "pages.index.period" }}',
         },
         computed: {
             xrayStateLabel() {
@@ -677,6 +707,28 @@
                 } catch (e) {
                     console.error(e);
                 }
+            },
+            async getResetCountdown() {
+                try {
+                    const msg = await HttpUtil.get('/server/resetCountdown');
+                    if (msg.success && msg.obj) {
+                        this.resetItems = msg.obj;
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+            resetPeriodText(item) {
+                return this.periodText + ' ' + item.resetDays + ' ' + this.uptimeUnits.d;
+            },
+            resetDaysText(item) {
+                if (item.daysLeft < 0) {
+                    return this.expiredText;
+                }
+                if (item.daysLeft === 0) {
+                    return this.resetsTodayText;
+                }
+                return item.daysLeft + ' ' + this.uptimeUnits.d;
             },
             expiryChipClass(item) {
                 if (item.daysLeft < 0) {
@@ -896,6 +948,7 @@
             }
             this.getTrafficRank();
             this.getClientExpiry();
+            this.getResetCountdown();
             let tick = 0;
             while (true) {
                 try {
@@ -906,6 +959,7 @@
                 if (++tick % 15 === 0) {
                     this.getTrafficRank();
                     this.getClientExpiry();
+                    this.getResetCountdown();
                 }
                 await PromiseUtil.sleep(2000);
             }

@@ -152,6 +152,10 @@
 "expireNone" = "暂无启用中的到期客户端"
 "expired" = "已过期"
 "expiresToday" = "今日到期"
+"resetCountdown" = "流量重置倒数"
+"resetNone" = "暂无自动重置流量的客户端"
+"resetsToday" = "今日重置"
+"period" = "周期"
 
 [pages.inbounds]
 "title" = "入站列表"

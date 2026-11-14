@@ -893,3 +893,49 @@ func (s *ServerService) GetClientExpiry(limit int) ([]ClientExpiryItem, error) {
 	}
 	return items, nil
 }
+
+type ResetCountdownItem struct {
+	Email      string `json:"email"`
+	ResetDays  int    `json:"resetDays"`
+	ExpiryTime int64  `json:"expiryTime"`
+	DaysLeft   int    `json:"daysLeft"`
+}
+
+func (s *ServerService) GetResetCountdown(limit int) ([]ResetCountdownItem, error) {
+	db := database.GetDB()
+	rows := make([]xray.ClientTraffic, 0, 64)
+	err := db.Model(&xray.ClientTraffic{}).
+		Select("email, reset, expiry_time").
+		Where("reset > 0 AND expiry_time <> 0").
+		Find(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	nowMs := time.Now().UnixMilli()
+	items := make([]ResetCountdownItem, 0, len(rows))
+	for _, row := range rows {
+		expiry := row.ExpiryTime
+		if expiry < 0 {
+			expiry = nowMs - expiry
+		}
+		daysLeft := -1
+		if expiry > nowMs {
+			daysLeft = int((expiry - nowMs) / (24 * 3600 * 1000))
+		}
+		items = append(items, ResetCountdownItem{
+			Email:      row.Email,
+			ResetDays:  row.Reset,
+			ExpiryTime: expiry,
+			DaysLeft:   daysLeft,
+		})
+	}
+
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].ExpiryTime < items[j].ExpiryTime
+	})
+	if len(items) > limit {
+		items = items[:limit]
+	}
+	return items, nil
+}
