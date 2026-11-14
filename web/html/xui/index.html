@@ -238,7 +238,7 @@
             </a-row>
 
             <a-row :gutter="16" class="cb-rank-row">
-                <a-col :span="24">
+                <a-col :xs="24" :md="12">
                     <a-card class="cb-rank-card">
                         <div class="cb-card-head">
                             <span class="cb-card-title">{{ i18n "pages.index.trafficRank" }}</span>
@@ -266,10 +266,7 @@
                         <div class="cb-rank-empty" v-else>{{ i18n "pages.index.rankEmpty" }}</div>
                     </a-card>
                 </a-col>
-            </a-row>
-
-            <a-row :gutter="16" class="cb-rank-row">
-                <a-col :span="24">
+                <a-col :xs="24" :md="6">
                     <a-card class="cb-rank-card cb-exp-card">
                         <div class="cb-card-head">
                             <span class="cb-card-title">{{ i18n "pages.index.clientExpiry" }}</span>
@@ -285,10 +282,7 @@
                         <div class="cb-rank-empty" v-else>{{ i18n "pages.index.expireNone" }}</div>
                     </a-card>
                 </a-col>
-            </a-row>
-
-            <a-row :gutter="16" class="cb-rank-row">
-                <a-col :span="24">
+                <a-col :xs="24" :md="6">
                     <a-card class="cb-rank-card cb-exp-card">
                         <div class="cb-card-head">
                             <span class="cb-card-title">{{ i18n "pages.index.resetCountdown" }}</span>
@@ -297,9 +291,8 @@
                             <div class="cb-rank-item" v-for="item in resetItems" :key="item.email">
                                 <span class="cb-exp-ico"><a-icon type="history"></a-icon></span>
                                 <span class="cb-rank-email" :title="item.email">[[ item.email ]]</span>
-                                <span class="cb-exp-chip cb-exp-period">[[ resetPeriodText(item) ]]</span>
+                                <span class="cb-exp-chip">[[ resetPeriodText(item) ]]</span>
                                 <span class="cb-exp-chip" :class="expiryChipClass(item)">[[ resetDaysText(item) ]]</span>
-                                <span class="cb-exp-date">[[ expiryDateText(item) ]]</span>
                             </div>
                         </div>
                         <div class="cb-rank-empty" v-else>{{ i18n "pages.index.resetNone" }}</div>

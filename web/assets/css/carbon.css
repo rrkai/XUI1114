@@ -586,6 +586,10 @@
     max-width: none;
 }
 
+.cb-exp-card .cb-rank-item {
+    gap: 8px;
+}
+
 .cb-rank-io {
     flex: none;
     display: inline-flex;
@@ -642,10 +646,9 @@
 
 .cb-exp-date {
     flex: none;
-    min-width: 92px;
     text-align: right;
     color: var(--cb-text-2);
-    font-size: 12px;
+    font-size: 11.5px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
@@ -1393,10 +1396,7 @@
         font-size: 11.5px;
     }
 
-    .cb-exp-period {
-        display: none;
-    }
-
+    
     .cb-stat-value {
         font-size: 22px;
     }
