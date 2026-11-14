@@ -182,6 +182,7 @@ func InitDB(dbPath string) error {
 		&model.Outbound{},
 		&model.RoutingRule{},
 		&model.Setting{},
+		&model.ClientTrafficDaily{},
 		&xray.ClientTraffic{},
 	)
 	if err != nil {

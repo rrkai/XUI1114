@@ -236,6 +236,33 @@
                     </a-card>
                 </a-col>
             </a-row>
+
+            <a-row :gutter="16" class="cb-rank-row">
+                <a-col :span="24">
+                    <a-card class="cb-rank-card">
+                        <div class="cb-card-head">
+                            <span class="cb-card-title">{{ i18n "pages.index.trafficRank" }}</span>
+                            <span class="cb-rank-tabs">
+                                <button class="cb-rank-tab" :class="{on: rankTab === 'today'}"
+                                        @click="rankTab = 'today'">{{ i18n "pages.index.rankToday" }}</button>
+                                <button class="cb-rank-tab" :class="{on: rankTab === 'yesterday'}"
+                                        @click="rankTab = 'yesterday'">{{ i18n "pages.index.rankYesterday" }}</button>
+                            </span>
+                        </div>
+                        <div class="cb-rank-list" v-if="rankItems.length">
+                            <div class="cb-rank-item" v-for="(item, index) in rankItems" :key="item.email">
+                                <span class="cb-rank-no" :class="'n' + (index + 1)">[[ index + 1 ]]</span>
+                                <span class="cb-rank-email" :title="item.email">[[ item.email ]]</span>
+                                <span class="cb-rank-bar">
+                                    <span class="cb-rank-bar-fill" :style="{ width: rankBarWidth(item) }"></span>
+                                </span>
+                                <span class="cb-rank-size">[[ sizeFormat(item.total) ]]</span>
+                            </div>
+                        </div>
+                        <div class="cb-rank-empty" v-else>{{ i18n "pages.index.rankEmpty" }}</div>
+                    </a-card>
+                </a-col>
+            </a-row>
         </a-layout-content>
 
     </a-layout>
@@ -503,6 +530,8 @@
             loadingTip: '{{ i18n "loading"}}',
             showAlert: false,
             trafficHistory: [],
+            rankTab: 'today',
+            rank: {today: [], yesterday: []},
             i18nOnline: '{{ i18n "pages.index.online" }}',
             i18nOffline: '{{ i18n "pages.index.offline" }}',
             i18nError: '{{ i18n "pages.index.error" }}',
@@ -542,6 +571,12 @@
                     cachedBytes: cached,
                     freeBytes: available,
                 };
+            },
+            rankItems() {
+                return this.rank[this.rankTab] || [];
+            },
+            rankMax() {
+                return this.rankItems.reduce((max, item) => Math.max(max, Number(item.total) || 0), 0);
             },
             trafficChart() {
                 const points = this.trafficHistory;
@@ -593,6 +628,26 @@
             setStatus(data) {
                 this.status = new Status(data);
                 this.pushTrafficSample();
+            },
+            async getTrafficRank() {
+                try {
+                    const msg = await HttpUtil.get('/server/trafficRank');
+                    if (msg.success && msg.obj) {
+                        this.rank = {
+                            today: msg.obj.today || [],
+                            yesterday: msg.obj.yesterday || [],
+                        };
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+            rankBarWidth(item) {
+                const max = this.rankMax;
+                if (!max) {
+                    return '0%';
+                }
+                return Math.max(2, Number(item.total) / max * 100).toFixed(1) + '%';
             },
             pushTrafficSample() {
                 const now = Date.now();
@@ -786,11 +841,16 @@
             if (window.location.protocol !== "https:") {
                 this.showAlert = true;
             }
+            this.getTrafficRank();
+            let tick = 0;
             while (true) {
                 try {
                     await this.getStatus();
                 } catch (e) {
                     console.error(e);
+                }
+                if (++tick % 15 === 0) {
+                    this.getTrafficRank();
                 }
                 await PromiseUtil.sleep(2000);
             }

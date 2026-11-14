@@ -245,6 +245,9 @@
 
 #sider .ant-menu-inline .ant-menu-item,
 #sider-drawer .ant-menu-inline .ant-menu-item {
+    /* antd uses width: calc(100% + 1px); the 1px overflow lets the menu
+       scrollLeft flicker 0/1 on hover, which visibly shakes icon + label */
+    width: 100% !important;
     height: 42px;
     line-height: 42px;
     margin: 2px 0;
@@ -438,6 +441,136 @@
 .cb-stat-row > .ant-col > .ant-card,
 .cb-manage-row > .ant-col > .ant-card {
     width: 100%;
+}
+
+/* daily traffic ranking */
+
+.cb-rank-row {
+    margin-bottom: 8px;
+}
+
+.cb-rank-row > .ant-col {
+    float: none;
+    display: flex;
+}
+
+.cb-rank-card {
+    width: 100%;
+}
+
+.cb-rank-tabs {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 10px;
+    background: var(--cb-fill);
+}
+
+.cb-rank-tab {
+    padding: 3px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--cb-text-2);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .18s var(--cb-ease), color .18s var(--cb-ease);
+}
+
+.cb-rank-tab:hover {
+    color: var(--cb-text);
+}
+
+.cb-rank-tab.on {
+    background: var(--cb-card);
+    color: var(--cb-text);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .08);
+}
+
+.cb-rank-list {
+    display: flex;
+    flex-direction: column;
+    margin: 8px -8px 0;
+}
+
+.cb-rank-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 10px;
+}
+
+.cb-rank-item:hover {
+    background: var(--cb-hover);
+}
+
+.cb-rank-no {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: var(--cb-fill);
+    color: var(--cb-text-2);
+    font-size: 11.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.cb-rank-no.n1 { background: rgba(246, 196, 83, .28); color: #a06607; }
+.cb-rank-no.n2 { background: rgba(148, 163, 184, .26); color: #52627a; }
+.cb-rank-no.n3 { background: rgba(217, 143, 84, .24); color: #925426; }
+.dark .cb-rank-no.n1 { color: #f6c453; }
+.dark .cb-rank-no.n2 { color: #c3ccdb; }
+.dark .cb-rank-no.n3 { color: #e0a06a; }
+
+.cb-rank-email {
+    flex: 0 1 auto;
+    max-width: 26ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--cb-text);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.cb-rank-bar {
+    flex: 1 1 40px;
+    min-width: 40px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--cb-fill);
+    overflow: hidden;
+}
+
+.cb-rank-bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--cb-blue), var(--cb-purple));
+}
+
+.cb-rank-size {
+    flex: none;
+    min-width: 74px;
+    text-align: right;
+    color: var(--cb-text-2);
+    font-size: 12.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.cb-rank-empty {
+    padding: 14px 2px 6px;
+    color: var(--cb-text-3);
+    font-size: 12.5px;
 }
 
 .carbon-dash .ant-card-hoverable:hover {
@@ -1155,6 +1288,18 @@
 
     .cb-stat-card .ant-card-body {
         padding: 14px 14px;
+    }
+
+    .cb-rank-item {
+        gap: 8px;
+    }
+
+    .cb-rank-email {
+        max-width: 14ch;
+    }
+
+    .cb-rank-size {
+        min-width: 62px;
     }
 
     .cb-stat-value {

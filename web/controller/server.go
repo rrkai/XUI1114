@@ -41,6 +41,7 @@ func (a *ServerController) initRouter(g *gin.RouterGroup) {
 
 	g.Use(a.checkLogin)
 	g.GET("/status", a.status)
+	g.GET("/trafficRank", a.trafficRank)
 	g.GET("/getDb", a.getDb)
 	g.GET("/getConfigJson", a.getConfigJson)
 	g.GET("/getNewmldsa65", a.getNewmldsa65)
@@ -79,6 +80,11 @@ func (a *ServerController) status(c *gin.Context) {
 	a.lastGetStatusTime = time.Now()
 
 	jsonObj(c, a.lastStatus, nil)
+}
+
+func (a *ServerController) trafficRank(c *gin.Context) {
+	rank, err := a.serverService.GetTrafficRank(10)
+	jsonObj(c, rank, err)
 }
 
 func (a *ServerController) getXrayVersion(c *gin.Context) {

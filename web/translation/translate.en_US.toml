@@ -144,6 +144,10 @@
 "unitHours" = "h"
 "unitMinutes" = "m"
 "unitSeconds" = "s"
+"trafficRank" = "Traffic Ranking"
+"rankToday" = "Today"
+"rankYesterday" = "Yesterday"
+"rankEmpty" = "No data yet — daily totals accumulate from this update on"
 
 [pages.inbounds]
 "title" = "Inbounds"

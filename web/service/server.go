@@ -20,6 +20,7 @@ import (
 
 	"github.com/alireza0/x-ui/config"
 	"github.com/alireza0/x-ui/database"
+	"github.com/alireza0/x-ui/database/model"
 	"github.com/alireza0/x-ui/logger"
 	"github.com/alireza0/x-ui/util/common"
 	"github.com/alireza0/x-ui/util/sys"
@@ -811,4 +812,38 @@ func (s *ServerService) GetNewVlessEnc() (any, error) {
 	return map[string]any{
 		"auths": auths,
 	}, nil
+}
+
+type TrafficRankItem struct {
+	Email string `json:"email"`
+	Up    int64  `json:"up"`
+	Down  int64  `json:"down"`
+	Total int64  `json:"total"`
+}
+
+func (s *ServerService) GetTrafficRank(limit int) (map[string][]TrafficRankItem, error) {
+	db := database.GetDB()
+	now := time.Now()
+	result := make(map[string][]TrafficRankItem, 2)
+	for key, day := range map[string]string{
+		"today":     now.Format("2006-01-02"),
+		"yesterday": now.AddDate(0, 0, -1).Format("2006-01-02"),
+	} {
+		items := make([]TrafficRankItem, 0, limit)
+		err := db.Model(&model.ClientTrafficDaily{}).
+			Select("email, SUM(up) AS up, SUM(down) AS down").
+			Where("day = ?", day).
+			Group("email").
+			Order("SUM(up) + SUM(down) DESC").
+			Limit(limit).
+			Scan(&items).Error
+		if err != nil {
+			return nil, err
+		}
+		for i := range items {
+			items[i].Total = items[i].Up + items[i].Down
+		}
+		result[key] = items
+	}
+	return result, nil
 }

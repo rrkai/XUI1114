@@ -914,6 +914,23 @@ func (s *InboundService) addClientTraffic(tx *gorm.DB, traffics []*xray.ClientTr
 		return nil
 	}
 
+	// Keep a per-day bucket alongside the cumulative row so the dashboard
+	// can rank clients without replaying months of counters.
+	day := time.Now().Format("2006-01-02")
+	for _, traffic := range traffics {
+		if traffic.Email == "" || (traffic.Up <= 0 && traffic.Down <= 0) {
+			continue
+		}
+		err = tx.Exec(`INSERT INTO client_traffic_dailies (email, day, up, down) VALUES (?, ?, ?, ?)
+			ON CONFLICT(email, day) DO UPDATE SET up = client_traffic_dailies.up + excluded.up,
+			down = client_traffic_dailies.down + excluded.down`,
+			traffic.Email, day, traffic.Up, traffic.Down).Error
+		if err != nil {
+			logger.Warning("add client daily traffic failed:", err)
+			return nil
+		}
+	}
+
 	inboundExpiryTimeMap := make(map[int][]newExpiryTime, 0)
 	for index, t := range dbClientTraffics {
 		if t.ExpiryTime < 0 {
