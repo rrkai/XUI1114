@@ -1,74 +1,76 @@
-# X-UI
-**An Advanced Web Panel • Built on Xray Core**
+# X-UI 1.11.4 定制版
 
-![](https://img.shields.io/github/v/release/alireza0/x-ui.svg)
-![](https://img.shields.io/docker/pulls/alireza7/x-ui.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/alireza0/x-ui)](https://goreportcard.com/report/github.com/alireza0/x-ui)
-[![Downloads](https://img.shields.io/github/downloads/alireza0/x-ui/total.svg)](https://img.shields.io/github/downloads/alireza0/x-ui/total.svg)
-[![License](https://img.shields.io/badge/license-GPL%20V3-blue.svg?longCache=true)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+基于 [alireza0/x-ui](https://github.com/alireza0/x-ui) v1.11.4 的定制分支，遵循 GPLv3。
 
-> **Disclaimer:** This project is only for personal learning and communication, please do not use it for illegal purposes, please do not use it in a production environment
+![Release](https://img.shields.io/github/v/release/rrkai/XUI1114)
+![License](https://img.shields.io/badge/license-GPL%20V3-blue.svg)
 
-**If you think this project is helpful to you, you may wish to give a**:star2: **or donate me a coffee:**
+> **免责声明：** 本项目仅供个人学习与通信使用，请勿用于任何非法用途，不建议直接用于生产环境。
 
-**Official Donation Page:** [https://donate.alireza0.dev/](https://donate.alireza0.dev/)
+## 相对上游的主要改动
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/alireza7)
-<a href="https://nowpayments.io/donation/alireza7" target="_blank" rel="noreferrer noopener">
-   <img src="https://nowpayments.io/images/embeds/donation-button-black.svg" alt="Crypto donation button by NOWPayments">
-</a>
+| 项目 | 说明 |
+| --- | --- |
+| 界面语言 | 仅保留中文 / English，默认强制中文；不再根据浏览器 `Accept-Language` 自动切换，只认语言 cookie |
+| 默认时区 | `Asia/Shanghai`（新建数据库生效；导入旧库后可在设置页修改） |
+| 管理脚本 | `x-ui.sh` 全菜单汉化，安装 / 更新 / 重装地址全部指向本仓库 |
+| Xray 版本 | 固定 `v26.6.27`，面板内不可切换到其他版本 |
+| 出站列表 | 与入站一致的分页 + 全字段搜索（tag、协议、地址、端口、settings/streamSettings 内容） |
+| SQLite | WAL + `synchronous=NORMAL` + `busy_timeout=10s` + `txlock=IMMEDIATE`；`cache_size` 按内存自动（感知 cgroup，可用环境变量覆盖）；连接池 4/2（空闲 3 分钟回收）；`client_traffics.inbound_id` 索引；备份前 checkpoint，导入时清理 WAL sidecar |
 
-## Quick Overview
-| Features                               |      Enable?       |
-| -------------------------------------- | :----------------: |
-| Multi-Protocol                         | :heavy_check_mark: |
-| Multi-Language                         | :heavy_check_mark: |
-| Multi-Client/Inbound                   | :heavy_check_mark: |
-| Advanced Traffic Routing Interface     | :heavy_check_mark: |
-| Client & Traffic & System Status       | :heavy_check_mark: |
-| Date & Traffic Cap Based on First Use  | :heavy_check_mark: |
-| REST API                               | :heavy_check_mark: |
-| TG Bot (DB backup + admin + client)    | :heavy_check_mark: |
-| Subscription Service (link + info)     | :heavy_check_mark: |
-| Search in Deep                         | :heavy_check_mark: |
-| Dark/Light Theme                       | :heavy_check_mark: |
-| IP Limit per client (Linux Only)       | :heavy_check_mark:* |
-  
-## Install & Upgrade to Latest Version
+> SQLite 调优参数由程序在启动时施加，不存储在数据库文件中，因此导入其他数据库不会覆盖这些参数；导入只会带回 settings 表中的业务配置（时区、TG 语言、分页大小等）。
 
-```sh
-bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh)
-```
+## 快速概览
 
-## Install Legacy Version
+| 功能 | 支持 |
+| --- | :---: |
+| 多协议 | :heavy_check_mark: |
+| 中 / 英双语（默认中文） | :heavy_check_mark: |
+| 多客户端 / 多入站 | :heavy_check_mark: |
+| 高级流量路由界面 | :heavy_check_mark: |
+| 客户端 / 流量 / 系统状态 | :heavy_check_mark: |
+| 按首次使用时间计算到期与流量上限 | :heavy_check_mark: |
+| REST API | :heavy_check_mark: |
+| Telegram 机器人（数据库备份 + 管理 + 客户端查询） | :heavy_check_mark: |
+| 订阅服务（链接 + 信息） | :heavy_check_mark: |
+| 深度搜索 | :heavy_check_mark: |
+| 深色 / 浅色主题 | :heavy_check_mark: |
+| 客户端 IP 限制（仅 Linux，依赖 nftables） | :heavy_check_mark:* |
 
-**Step 1:** To install an old version, use following installation command. e.g., version `1.8.0`:
+## 安装与升级
 
 ```sh
-VERSION=1.8.0 && bash <(curl -Ls "https://raw.githubusercontent.com/alireza0/x-ui/$VERSION/install.sh") $VERSION
+bash <(curl -Ls https://raw.githubusercontent.com/rrkai/XUI1114/main/install.sh)
 ```
 
-## Manual Install & Upgrade
+安装指定版本（用本仓库的 Release tag）：
+
+```sh
+VERSION=v1.11.4-custom1 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/XUI1114/main/install.sh) $VERSION
+```
+
+- 安装脚本从本仓库的 `releases/latest` 下载 `x-ui-linux-<arch>.tar.gz`。
+- 默认面板端口 `54321`，默认账号 `admin / admin`，首次登录后请立即修改密码并修改面板路径/端口。
+
+## 手动安装与升级
 
 <details>
-  <summary>Click for details</summary>
-  
-### Usage
+  <summary>展开查看</summary>
 
-1. Make sure the required packages are installed (the install script does this automatically, so this step is only needed for manual installs):
+1. 安装依赖（安装脚本会自动处理，手动安装时需要）：
 
 ```sh
-# Debian/Ubuntu
+# Debian / Ubuntu
 apt-get update && apt-get install -y wget curl tar tzdata cron ca-certificates nftables
-# CentOS/Alma/Rocky/Fedora
+# CentOS / Alma / Rocky / Fedora
 # yum install -y wget curl tar tzdata cronie ca-certificates nftables
-# Arch/Manjaro
+# Arch / Manjaro
 # pacman -Syu --noconfirm wget curl tar tzdata cronie ca-certificates nftables
 ```
 
-> `ca-certificates` is needed for HTTPS/TLS connections, and `nftables` is required by the per-client IP limit feature.
+> `ca-certificates` 用于 HTTPS/TLS，`nftables` 是客户端 IP 限制功能所需。
 
-2. To download the latest version of the compressed package directly to your server, run the following command:
+2. 下载最新发布包：
 
 ```sh
 ARCH=$(uname -m)
@@ -80,27 +82,20 @@ case "${ARCH}" in
   *) XUI_ARCH="amd64" ;;
 esac
 
-wget https://github.com/alireza0/x-ui/releases/latest/download/x-ui-linux-${XUI_ARCH}.tar.gz
+wget https://github.com/rrkai/XUI1114/releases/latest/download/x-ui-linux-${XUI_ARCH}.tar.gz
 ```
 
-3. Once the compressed package is downloaded, execute the following commands to install or upgrade x-ui:
+3. 安装或升级：
 
 ```sh
-ARCH=$(uname -m)
-case "${ARCH}" in
-  x86_64 | x64 | amd64) XUI_ARCH="amd64" ;;
-  i*86 | x86) XUI_ARCH="386" ;;
-  armv8* | armv8 | arm64 | aarch64) XUI_ARCH="arm64" ;;
-  armv7* | armv7) XUI_ARCH="armv7" ;;
-  *) XUI_ARCH="amd64" ;;
-esac
-cd /root/
-rm x-ui/ /usr/local/x-ui/ /usr/bin/x-ui -rf
+systemctl stop x-ui 2>/dev/null || true
+cp /etc/x-ui/x-ui.db /root/x-ui.db.bak.$(date +%F-%H%M) 2>/dev/null || true
 tar zxvf x-ui-linux-${XUI_ARCH}.tar.gz
 chmod +x x-ui/x-ui x-ui/bin/xray-linux-* x-ui/x-ui.sh
-cp x-ui/x-ui.sh /usr/bin/x-ui
+cp -f x-ui/x-ui.sh /usr/bin/x-ui
 cp -f x-ui/x-ui.service /etc/systemd/system/
-mv x-ui/ /usr/local/
+rm -rf /usr/local/x-ui
+mv x-ui /usr/local/
 systemctl daemon-reload
 systemctl enable x-ui
 systemctl restart x-ui
@@ -108,224 +103,185 @@ systemctl restart x-ui
 
 </details>
 
-## Install using Docker
+## Docker 部署
 
-<details>
-   <summary>Click for details</summary>
+仓库自带 `Dockerfile`。注意：`docker-compose.yml` 中的 `image` 仍指向上游镜像，使用前请改为本地构建，或直接使用下面的命令。
 
-### Usage
+```sh
+git clone https://github.com/rrkai/XUI1114.git
+cd XUI1114
+docker build -t x-ui .
 
-**Step 1:** Install Docker
-
-```shell
-curl -fsSL https://get.docker.com | sh
-```
-
-**Step 2:** Clone the Project Repository:
-
-   ```sh
-   git clone https://github.com/alireza0/x-ui.git
-   cd x-ui
-   ```
-
-**Step 3:** Start the Service
-
-   ```sh
-   docker compose up -d
-   ```
-
-   OR
-
-```shell
-mkdir x-ui && cd x-ui
+mkdir -p db cert
 docker run -itd \
-    -p 54321:54321 -p 443:443 -p 80:80 \
+    --name x-ui --restart=unless-stopped --network host \
     -e XRAY_VMESS_AEAD_FORCED=false \
     -v $PWD/db/:/etc/x-ui/ \
     -v $PWD/cert/:/root/cert/ \
-    --name x-ui --restart=unless-stopped \
-    alireza7/x-ui:latest
+    --cap-add NET_ADMIN \
+    x-ui
 ```
 
-update to latest version
+## 语言
 
-   ```sh
-    cd x-ui
-    docker compose down
-    docker compose pull x-ui
-    docker compose up -d
-   ```
-
-remove x-ui from docker 
-
-   ```sh
-    docker stop x-ui
-    docker rm x-ui
-    cd --
-    rm -r x-ui
-   ```
-
-> Build your own image
-
-```shell
-docker build -t x-ui .
-```
-
-</details>
-
-## Languages
-
+- 中文（默认，强制）
 - English
-- Chinese
-- Farsi
-- Russian
-- Vietnamese
 
-## Features
+## 功能特性
 
-- Supports protocols including VLESS, VMess, Trojan, Shadowsocks, Dokodemo-door, SOCKS, HTTP, Wireguard
-- Supports XTLS protocols, including Vision and REALITY
-- An advanced interface for routing traffic, incorporating PROXY Protocol, Reverse, External, and Transparent Proxy, along with Multi-Domain, SSL Certificate, and Port
-- Support auto generate Cloudflare WARP using Wireguard outbound
-- An interactive JSON interface for Xray template configuration
-- An advanced interface for inbound and outbound configuration
-- Clients’ traffic cap and expiration date based on first use
-- Per-client IP limit that blocks connections beyond an allowed number of concurrent IPs (powered by nftables)
-- Displays online clients, traffic statistics, and system status monitoring
-- Deep database search
-- Displays depleted clients with expired dates or exceeded traffic cap
-- Subscription service with (multi)link
-- Importing and exporting databases
-- One-Click SSL certificate application and automatic renewal
-- HTTPS for secure access to the web panel and subscription service (self-provided domain + SSL certificate)
-- Dark/Light theme
+- 支持 VLESS、VMess、Trojan、Shadowsocks、Dokodemo-door、SOCKS、HTTP、Wireguard 等协议
+- 支持 XTLS，包括 Vision 与 REALITY
+- 高级流量路由界面：PROXY Protocol、Reverse、External、Transparent Proxy，以及多域名、SSL 证书、端口配置
+- 支持通过 Wireguard 出站自动生成 Cloudflare WARP
+- 可视化 JSON 编辑器，编辑 Xray 模板配置
+- 入站 / 出站高级配置界面
+- 客户端流量上限与到期时间可按首次使用时间起算
+- 按客户端限制并发 IP 数（nftables，仅 Linux）
+- 在线客户端、流量统计、系统状态监控
+- 数据库深度搜索
+- 展示已耗尽（过期或超流量）的客户端
+- 订阅服务（多链接）
+- 数据库导入 / 导出
+- 一键申请 SSL 证书并自动续期
+- 面板与订阅服务的 HTTPS 访问（自有域名 + 证书）
+- 深色 / 浅色主题
 
-## Preview
+## 界面预览
 
-![inbounds](./media/inbounds.png)
-![Dark inbounds](./media/inbounds-dark.png)
-![outbounds](./media/outbounds.png)
-![rules](./media/rules.png)
-![warp](./media/warp.png)
+![入站列表](./media/inbounds.png)
+![深色入站列表](./media/inbounds-dark.png)
+![出站列表](./media/outbounds.png)
+![路由规则](./media/rules.png)
+![WARP](./media/warp.png)
 
-
-## API Routes
+## API 路由
 
 <details>
-  <summary>Click for details</summary>
+  <summary>展开查看</summary>
 
-### Usage
+- `/login`，`POST` 用户数据：`{username: '', password: ''}`
+- `/xui/API/inbounds`：
 
-- `/login` with `PUSH` user data: `{username: '', password: ''}` for login
-- `/xui/API/inbounds` base for following actions:
+| 方法 | 路径 | 说明 |
+| :---: | --- | --- |
+| `GET` | `"/"` | 获取全部入站 |
+| `GET` | `"/get/:id"` | 按 id 获取入站 |
+| `POST` | `"/add"` | 添加入站 |
+| `POST` | `"/del/:id"` | 删除入站 |
+| `POST` | `"/update/:id"` | 更新入站 |
+| `POST` | `"/addClient/"` | 向入站添加客户端 |
+| `POST` | `"/:id/delClient/:clientId"` | 按 clientId 删除客户端* |
+| `POST` | `"/updateClient/:clientId"` | 按 clientId 更新客户端* |
+| `GET` | `"/getClientTraffics/:email"` | 按邮箱获取客户端流量 |
+| `GET` | `"/getClientTrafficsById/:id"` | 按 ID 获取客户端流量 |
+| `POST` | `"/:id/resetClientTraffic/:email"` | 重置客户端流量 |
+| `POST` | `"/resetAllTraffics"` | 重置所有入站流量 |
+| `POST` | `"/resetAllClientTraffics/:id"` | 重置入站客户端流量（-1 表示全部） |
+| `POST` | `"/delDepletedClients/:id"` | 删除入站耗尽客户端（-1 表示全部） |
+| `POST` | `"/import"` | 从导出数据导入入站 |
+| `POST` | `"/onlines"` | 获取在线用户（邮箱列表） |
 
-| Method | Path                               | Action                                    |
-| :----: | ---------------------------------  | ----------------------------------------- |
-| `GET`  | `"/"`                              | Get all inbounds                          |
-| `GET`  | `"/get/:id"`                       | Get inbound with inbound.id               |
-| `POST` | `"/add"`                           | Add inbound                               |
-| `POST` | `"/del/:id"`                       | Delete inbound                            |
-| `POST` | `"/update/:id"`                    | Update inbound                            |
-| `POST` | `"/addClient/"`                    | Add client to inbound                     |
-| `POST` | `"/:id/delClient/:clientId"`       | Delete client by clientId\*               |
-| `POST` | `"/updateClient/:clientId"`        | Update client by clientId\*               |
-| `GET`  | `"/getClientTraffics/:email"`      | Get client's traffic                      |
-| `GET`  | `"/getClientTrafficsById/:id"`     | Get client's traffic By ID                |
-| `POST` | `"/:id/resetClientTraffic/:email"` | Reset client's traffic                    |
-| `POST` | `"/resetAllTraffics"`              | Reset traffics of all inbounds            |
-| `POST` | `"/resetAllClientTraffics/:id"`    | Reset inbound clients traffics (-1: all)  |
-| `POST` | `"/delDepletedClients/:id"`        | Delete inbound depleted clients (-1: all) |
-| `POST` | `"/import"`                        | Import an inbound from exported data      |
-| `POST` | `"/onlines"`                       | Get online users ( list of emails )       |
+\* `clientId` 取值：VMess/VLESS 用 `client.id`，Trojan 用 `client.password`，Shadowsocks 用 `client.email`。
 
+- `/xui/API/outbounds`：
 
-- The field `clientId` should be filled by:
-  - `client.id` for VMess and VLESS
-  - `client.password` for Trojan
-  - `client.email` for Shadowsocks
+| 方法 | 路径 | 说明 |
+| :---: | --- | --- |
+| `GET` | `"/"` | 获取全部出站 |
+| `POST` | `"/add"` | 添加出站 |
+| `POST` | `"/del/:id"` | 删除出站 |
+| `POST` | `"/update/:id"` | 更新出站 |
+| `POST` | `"/setFirst/:id"` | 将出站移到列表首位 |
+| `POST` | `"/:id/resetTraffic"` | 重置出站流量 |
+| `POST` | `"/resetAllTraffics"` | 重置所有出站流量 |
+| `POST` | `"/onlines"` | 获取在线出站 tag |
+| `POST` | `"/test"` | 测试出站连通性 |
+| `POST` | `"/reverseTags"` | 获取客户端 reverse tag（可作为 dialer） |
 
+- `/xui/API/routing`：
 
-- `/xui/API/outbounds` base for following actions:
+| 方法 | 路径 | 说明 |
+| :---: | --- | --- |
+| `GET` | `"/"` | 获取全部路由规则 |
+| `GET` | `"/refs"` | 获取路由引用（tag 与元数据） |
+| `POST` | `"/save"` | 保存路由规则 |
+| `POST` | `"/replaceBalancerTag"` | 替换路由规则中的 balancer tag |
 
-| Method | Path                               | Action                                    |
-| :----: | ---------------------------------  | ----------------------------------------- |
-| `GET`  | `"/"`                              | Get all outbounds                         |
-| `POST` | `"/add"`                           | Add outbound                              |
-| `POST` | `"/del/:id"`                       | Delete outbound                           |
-| `POST` | `"/update/:id"`                    | Update outbound                           |
-| `POST` | `"/setFirst/:id"`                  | Move outbound to the top of the list      |
-| `POST` | `"/:id/resetTraffic"`              | Reset outbound's traffic                  |
-| `POST` | `"/resetAllTraffics"`             | Reset traffics of all outbounds           |
-| `POST` | `"/onlines"`                       | Get online outbound tags                  |
-| `POST` | `"/test"`                          | Test outbound connectivity                |
-| `POST` | `"/reverseTags"`                   | Get client reverse tags (usable as dialer)|
+- `/xui/API/server`：
 
-
-- `/xui/API/routing` base for following actions:
-
-| Method | Path                               | Action                                    |
-| :----: | ---------------------------------  | ----------------------------------------- |
-| `GET`  | `"/"`                              | Get all routing rules                     |
-| `GET`  | `"/refs"`                          | Get routing references (tags & metadata)  |
-| `POST` | `"/save"`                          | Save routing rules                        |
-| `POST` | `"/replaceBalancerTag"`            | Replace a balancer tag in routing rules   |
-
-
-- `/xui/API/server` base for following actions:
-
-| Method | Path                               | Action                                    |
-| :----: | ---------------------------------  | ----------------------------------------- |
-| `GET`  | `"/status"`                        | Get server status                         |
-| `GET`  | `"/getDb"`                         | Get database backup                       |
-| `GET`  | `"/createbackup"`                  | Telegram bot sends backup to admins       |
-| `GET`  | `"/getConfigJson"`                 | Get config.json                           |
-| `GET`  | `"/getXrayVersion"`                | Get last xray versions                    |
-| `GET`  | `"/getNewVlessEnc"`                | Get new vless enc                         |
-| `GET`  | `"/getNewX25519Cert"`              | Get new x25519 cert                       |
-| `GET`  | `"/getNewmldsa65"`                 | Get new mldsa65                           |
-| `POST` | `"/getNewEchCert"`                 | Get new ech cert                          |
-| `POST` | `"/getCertHash"`                   | Get hash for provided cert                |
-| `POST` | `"/getTlsPing"`                    | Get hash by TLS ping                      |
-| `POST` | `"/importDB"`                      | Import database to x-ui                   |
-| `POST` | `"/stopXrayService"`               | Stop xray service                         |
-| `POST` | `"/restartXrayService"`            | Restart xray service                      |
-| `POST` | `"/installXray/:version"`          | Install specific version of xray          |
-| `POST` | `"/logs/:count"`                   | Get panel/xray logs                       |
-
+| 方法 | 路径 | 说明 |
+| :---: | --- | --- |
+| `GET` | `"/status"` | 获取服务器状态 |
+| `GET` | `"/getDb"` | 下载数据库备份 |
+| `GET` | `"/createbackup"` | 让 Telegram 机器人向管理员发送备份 |
+| `GET` | `"/getConfigJson"` | 获取 config.json |
+| `GET` | `"/getXrayVersion"` | 获取可用的 Xray 版本（本版本固定返回 v26.6.27） |
+| `GET` | `"/getNewVlessEnc"` | 生成新的 VLESS 加密参数 |
+| `GET` | `"/getNewX25519Cert"` | 生成新的 X25519 证书 |
+| `GET` | `"/getNewmldsa65"` | 生成新的 mldsa65 密钥 |
+| `POST` | `"/getNewEchCert"` | 生成新的 ECH 证书 |
+| `POST` | `"/getCertHash"` | 计算证书哈希 |
+| `POST` | `"/getTlsPing"` | 通过 TLS ping 获取哈希 |
+| `POST` | `"/importDB"` | 导入数据库 |
+| `POST` | `"/stopXrayService"` | 停止 Xray |
+| `POST` | `"/restartXrayService"` | 重启 Xray |
+| `POST` | `"/installXray/:version"` | 安装指定版本 Xray（本版本会强制锁定 v26.6.27） |
+| `POST` | `"/logs/:count"` | 获取面板 / Xray 日志 |
 
 </details>
 
-## Environment Variables
+## 环境变量
+
+| 变量 | 类型 | 默认值 |
+| --- | :---: | --- |
+| `XUI_LOG_LEVEL` | `"debug"` \| `"info"` \| `"warn"` \| `"error"` | `"info"` |
+| `XUI_DEBUG` | `boolean` | `false` |
+| `XUI_BIN_FOLDER` | `string` | `"bin"` |
+| `XUI_DB_FOLDER` | `string` | `"/etc/x-ui"` |
+| `XUI_SQLITE_CACHE_SIZE` | `int64`：负数 = KiB/连接，正数 = 页数/连接 | 按内存自动 |
+
+## SQLite 调优说明
+
+面板默认启用 WAL 与并发优化，全部在启动时施加，无需手动改库：
+
+| 参数 | 值 |
+| --- | --- |
+| `journal_mode` | `WAL` |
+| `synchronous` | `NORMAL`（WAL 下的安全/性能折中） |
+| `busy_timeout` | `10000` ms |
+| `txlock` | `IMMEDIATE`（避免先读后写事务在 WAL 下升级失败） |
+| `cache_size` | 自动：≤512MB 内存 `-4000`，≤1GB `-8000`，>1GB `-16000`（KiB/连接，cgroup 限制生效） |
+| 连接池 | 最大 4，空闲 2，空闲 3 分钟回收 |
+| 索引 | `client_traffics.inbound_id`（自动补建） |
+
+启动日志（syslog / journald）会输出实际取值，例如：
+
+```text
+INFO - sqlite: cache_size= -16000  source= auto  memory_limit_mb= 3921
+```
+
+可用 `XUI_SQLITE_CACHE_SIZE` 覆盖，例如 `XUI_SQLITE_CACHE_SIZE=-8000`。
+
+### 备份与导入
+
+- 请使用面板的“导出数据库”：导出前会执行 `wal_checkpoint(TRUNCATE)`，确保备份完整。
+- 不要直接复制正在运行的 `x-ui.db`：最新数据可能还在 `-wal` 文件中。
+- 导入会整库替换，并自动清理旧 `-wal/-shm`、执行迁移、补建索引；导入的 settings（时区、TG 语言、分页大小等）会随备份恢复，导入后按需调整。
+
+## SSL 证书
 
 <details>
-  <summary>Click for details</summary>
+  <summary>展开查看</summary>
 
-### Usage
+### Cloudflare（推荐）
 
-| Variable       |                      Type                      | Default       |
-| -------------- | :--------------------------------------------: | :------------ |
-| XUI_LOG_LEVEL  | `"debug"` \| `"info"` \| `"warn"` \| `"error"` | `"info"`      |
-| XUI_DEBUG      |                   `boolean`                    | `false`       |
-| XUI_BIN_FOLDER |                    `string`                    | `"bin"`       |
-| XUI_DB_FOLDER  |                    `string`                    | `"/etc/x-ui"` |
+管理脚本内置 Cloudflare 证书申请。需要：
 
-</details>
-
-## SSL Certificate
-
-<details>
-  <summary>Click for details</summary>
-
-### Cloudflare 
-
-The admin management script has a built-in SSL certificate application for Cloudflare. To use this script to apply for a certificate, you need the following:
-
-- Cloudflare registered email
+- Cloudflare 注册邮箱
 - Cloudflare Global API Key
-- The domain name has been resolved to the current server through cloudflare
+- 域名已通过 Cloudflare 解析到当前服务器
 
-**Step 1:** Run the`x-ui`command on the server's terminal and then choose `17`. Then enter the information as requested.
-
+在服务器上执行 `x-ui`，选择菜单 **19（Cloudflare SSL 证书）**，按提示输入即可。
 
 ### Certbot
 
@@ -334,91 +290,59 @@ snap install core; snap refresh core
 snap install --classic certbot
 ln -s /snap/bin/certbot /usr/bin/certbot
 
-certbot certonly --standalone --register-unsafely-without-email --non-interactive --agree-tos -d <Your Domain Name>
+certbot certonly --standalone --register-unsafely-without-email --non-interactive --agree-tos -d <你的域名>
 ```
 
 </details>
 
-## Telegram Bot
+## Telegram 机器人
 
 <details>
-  <summary>Click for details</summary>
+  <summary>展开查看</summary>
 
-### Usage
-
-The web panel supports daily traffic, panel login, database backup, system status, client info, and other notification and functions through the Telegram Bot. To use the bot, you need to set the bot-related parameters in the panel, including:
+面板支持通过 Telegram 机器人发送每日流量、登录通知、数据库备份、系统状态、客户端信息等。需要在面板设置中配置：
 
 - Telegram Token
-- Admin Chat ID(s)
-- Notification Time (in cron syntax)
-- Database Backup
-- CPU Load Threshold Notification
+- 管理员 Chat ID（可多个）
+- 通知时间（cron 表达式）
+- 数据库备份开关
+- CPU 负载阈值通知
 
-**Crontab Time Format**
+**Crontab 时间格式示例**
 
-Reference syntax:
+- `*/30 * * * *` - 每 30 分钟通知
+- `30 * * * * *` - 每分钟第 30 秒通知
+- `0 */10 * * * *` - 每 10 分钟通知
+- `@hourly` - 每小时
+- `@daily` - 每天 00:00
+- `@every 8h` - 每 8 小时
 
-- `*/30 * * * *` - Notify every 30 minutes, every hour
-- `30 * * * * *` - Notify at the 30th second of each minute
-- `0 */10 * * * *` - Notify at the start of every 10 minutes
-- `@hourly` - Hourly notification
-- `@daily` - Daily notification (00:00 AM)
-- `@every 8h` - Notify every 8 hours
+### 功能
 
-For more info about [Crontab](https://acquia.my.site.com/s/article/360004224494-Cron-time-string-format)
+- 定时报表
+- 登录通知
+- CPU 负载阈值通知
+- 到期时间与流量预警
+- 按 Telegram ID 或用户名查询客户端
+- 匿名流量查询（按 UUID / 密码搜索）
+- 菜单式交互
+- 管理员按邮箱搜索客户端
+- 入站检查
+- 系统状态检查
+- 耗尽客户端检查
+- 按需备份与定时备份
+- 多语言（本版本默认中文）
 
-### Features
-
-- Periodic reporting
-- Login notifications
-- CPU load threshold notifications
-- Advance notifications for expiration time and traffic
-- Client reporting menu with Telegram ID or username in configurations
-- Anonymous traffic reports, search by UUID (VLESS/VMess) or Password (Trojan/Shadowsocks)
-- Menu-based bot
-- Client search by email (admin only)
-- Inbound checks
-- System status check
-- Depleted client checks
-- Backup on request and in periodic reports
-- Multilingual support
 </details>
 
-## Troubleshoots
+## 常见问题
 
 <details>
-  <summary>Click for details</summary>
+  <summary>展开查看</summary>
 
-### Enable Traffic Usage
+### 客户端流量统计不生效
 
-If you are upgrading from an older version or other forks and find that data traffic usage for clients may not work by default, follow the steps below to enable it:
-
-**Step 1: Locate the Configuration Section**
-
-Find the following section in the config file:
-
-```json
-  "policy": {
-    "system": {
-      // Other policy configurations
-    }
-  },
-```
-**Step 2: Add the Required Configuration**
-
-Add the following section just after `"policy": {`:
-
-```json
-"levels": {
-  "0": {
-    "statsUserUplink": true,
-    "statsUserDownlink": true
-  }
-},
-```
-**Step 3: Final Configuration**
-
-Your final config should look like this:
+如果从旧版本或其他分支升级，客户端流量可能默认未开启。检查 Xray 模板中的 `policy` 段，确保包含：
 
 ```json
 "policy": {
@@ -433,25 +357,23 @@ Your final config should look like this:
     "statsInboundUplink": true
   }
 },
-"routing": {
-  // Other routing configurations
-},
 ```
-**Step 4: Save and Restart**
 
-Save your changes and restart the Xray Service
+保存后重启 Xray 服务。
+
+### 导入原版数据库后时区变成 Asia/Tehran
+
+时区保存在 settings 表中，会随导入的库恢复。到“设置”页改为 `Asia/Shanghai` 即可；SQLite 调优参数不受影响。
+
 </details>
 
-## A Special Thanks to
+## 致谢
 
-- [HexaSoftwareTech](https://github.com/HexaSoftwareTech/)
-- [MHSanaei](https://github.com/MHSanaei)
+- 上游项目：[alireza0/x-ui](https://github.com/alireza0/x-ui)（GPLv3）
+- [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)（GPL-3.0）
+- [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules)（GPL-3.0）
+- [HexaSoftwareTech](https://github.com/HexaSoftwareTech/)、[MHSanaei](https://github.com/MHSanaei)
 
-## Acknowledgment
+## 许可证
 
-- [Loyalsoldier](https://github.com/Loyalsoldier/v2ray-rules-dat) (License: **GPL-3.0**): _The enhanced version of V2Ray routing rule._
-- [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (License: **GPL-3.0**): _Enhanced v2ray/xray and v2ray/xray-clients routing rules with built-in Iranian domains and a focus on security and adblocking._
-
-## Stargazers over Time
-
-[![Stargazers over time](https://starchart.cc/alireza0/x-ui.svg)](https://starchart.cc/alireza0/x-ui)
+本项目遵循 **GPLv3**。分发或修改后分发时，请保留许可证并公开对应源码。
