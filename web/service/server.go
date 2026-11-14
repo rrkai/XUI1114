@@ -31,6 +31,7 @@ import (
 	"github.com/shirou/gopsutil/v4/load"
 	"github.com/shirou/gopsutil/v4/mem"
 	"github.com/shirou/gopsutil/v4/net"
+	"github.com/shirou/gopsutil/v4/sensors"
 )
 
 type ProcessState string
@@ -41,13 +42,20 @@ const (
 	Error   ProcessState = "Error"
 )
 
+type TempSensor struct {
+	Name string  `json:"name"`
+	Temp float64 `json:"temp"`
+}
+
 type Status struct {
 	T        time.Time `json:"-"`
 	Cpu      float64   `json:"cpu"`
 	CpuCount int       `json:"cpuCount"`
 	Mem      struct {
-		Current uint64 `json:"current"`
-		Total   uint64 `json:"total"`
+		Current   uint64 `json:"current"`
+		Total     uint64 `json:"total"`
+		Cached    uint64 `json:"cached"`
+		Available uint64 `json:"available"`
 	} `json:"mem"`
 	Swap struct {
 		Current uint64 `json:"current"`
@@ -79,6 +87,7 @@ type Status struct {
 		Mem     uint64 `json:"mem"`
 		Uptime  uint64 `json:"uptime"`
 	} `json:"appStats"`
+	Temps []TempSensor `json:"temps"`
 	HostInfo struct {
 		HostName string `json:"hostname"`
 		Ipv4     string `json:"ipv4"`
@@ -169,6 +178,8 @@ func (s *ServerService) GetStatus(lastStatus *Status) *Status {
 	} else {
 		status.Mem.Current = memInfo.Used
 		status.Mem.Total = memInfo.Total
+		status.Mem.Cached = memInfo.Cached
+		status.Mem.Available = memInfo.Available
 	}
 
 	swapInfo, err := mem.SwapMemory()
@@ -224,6 +235,22 @@ func (s *ServerService) GetStatus(lastStatus *Status) *Status {
 		logger.Warning("get udp connections failed:", err)
 	}
 
+	if temps, err := sensors.SensorsTemperatures(); err == nil {
+		for _, t := range temps {
+			if t.Temperature <= 0 || t.Temperature >= 150 {
+				continue
+			}
+			name := strings.TrimSpace(t.SensorKey)
+			if name == "" {
+				name = "sensor"
+			}
+			status.Temps = append(status.Temps, TempSensor{Name: name, Temp: t.Temperature})
+			if len(status.Temps) == 2 {
+				break
+			}
+		}
+	}
+
 	if s.xrayService.IsXrayRunning() {
 		status.Xray.State = Running
 		status.Xray.ErrorMsg = ""
@@ -259,14 +286,18 @@ func (s *ServerService) GetStatus(lastStatus *Status) *Status {
 			addrs := netInterfaces[i].Addrs
 
 			for _, address := range addrs {
-				if strings.Contains(address.Addr, ".") {
-					status.HostInfo.Ipv4 += address.Addr + " "
-				} else if address.Addr[0:6] != "fe80::" {
-					status.HostInfo.Ipv6 += address.Addr + " "
+				ip := strings.Split(address.Addr, "/")[0]
+				if strings.Contains(ip, ".") {
+					status.HostInfo.Ipv4 += ip + " "
+				} else if !strings.HasPrefix(ip, "fe80:") {
+					status.HostInfo.Ipv6 += ip + " "
 				}
 			}
 		}
 	}
+
+	status.HostInfo.Ipv4 = strings.TrimSpace(status.HostInfo.Ipv4)
+	status.HostInfo.Ipv6 = strings.TrimSpace(status.HostInfo.Ipv6)
 
 	return status
 }

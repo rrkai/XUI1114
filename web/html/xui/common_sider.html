@@ -1,17 +1,20 @@
 {{define "menuItems"}}
-<a-row style="padding: .5rem;">
-    <a-col span="12" style="font-size: 18px; font-weight: bold;">X-UI</a-col>
-    <a-col span="12" style="text-align: right; padding-top: .2rem;">
+<div class="cb-brand">
+    <span class="cb-brand-logo">X</span>
+    <span class="cb-brand-text">
+        <strong>X-UI</strong>
+        <small>v{{ .cur_ver }}</small>
+    </span>
+    <span class="cb-brand-side">
         <a-tooltip title="Donate">
             <a-icon type="heart"
-                @click="window.open('https://donate.alireza0.dev', '_blank')"
-                style="font-size: 1rem; margin-right: .5rem;">
+                @click="window.open('https://donate.alireza0.dev', '_blank')">
             </a-icon>
         </a-tooltip>
         <theme-switch />
-    </a-col>
-</a-row>
-<a-divider style="margin: 0"></a-divider>
+    </span>
+</div>
+<div class="cb-sep-line"></div>
 <a-menu :theme="themeSwitcher.currentTheme" mode="inline" :selected-keys="['{{ .request_uri }}']"
 @click="({key}) => key.startsWith('http') ? window.open(key) : location.href = key">
     <a-menu-item key="{{ .base_path }}xui/">

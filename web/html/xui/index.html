@@ -23,7 +23,7 @@
 <a-layout id="app" v-cloak :class="themeSwitcher.currentTheme">
     {{ template "commonSider" . }}
     <a-layout id="content-layout">
-        <a-layout-content>
+        <a-layout-content class="carbon-dash">
             <a-spin :spinning="spinning" :delay="200" :tip="loadingTip"/>
             <transition name="list" appear>
                 <a-alert type="error" v-if="showAlert" style="margin-bottom: 10px"
@@ -34,228 +34,210 @@
                 >
                 </a-alert>
             </transition>
+
             <transition name="list" appear>
-                <a-row>
-                    <a-card hoverable>
-                        <a-row>
-                            <a-col :sm="24" :md="12">
-                                <a-row>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.cpu.color"
-                                                    :percent="status.cpu.percent"></a-progress>
-                                            <div><strong>CPU:</strong>  [[ cpuCoreFormat(status.cpuCount) ]]</div>
-                                    </a-col>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.mem.color"
-                                                    :percent="status.mem.percent"></a-progress>
-                                        <div>
-                                            <strong>{{ i18n "pages.index.memory"}}:</strong> [[ sizeFormat(status.mem.current) ]] / [[ sizeFormat(status.mem.total) ]]
-                                        </div>
-                                    </a-col>
-                                </a-row>
-                            </a-col>
-                            <a-col :sm="24" :md="12">
-                                <a-row>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.swap.color"
-                                                    :percent="status.swap.percent"></a-progress>
-                                        <div>
-                                            <strong>Swap:</strong> [[ sizeFormat(status.swap.current) ]] / [[ sizeFormat(status.swap.total) ]]
-                                        </div>
-                                    </a-col>
-                                    <a-col :span="12" style="text-align: center">
-                                        <a-progress type="dashboard" status="normal"
-                                                    :stroke-color="status.disk.color"
-                                                    :percent="status.disk.percent"></a-progress>
-                                        <div>
-                                            <strong>{{ i18n "pages.index.hard"}}:</strong> [[ sizeFormat(status.disk.current) ]] / [[ sizeFormat(status.disk.total) ]]
-                                        </div>
-                                    </a-col>
-                                </a-row>
-                            </a-col>
-                        </a-row>
+                <div class="cb-hero-bar">
+                    <div class="cb-hero-id">
+                        <span class="cb-hero-logo">X</span>
+                        <div class="cb-hero-text">
+                            <div class="cb-hero-title">[[ status.hostInfo.hostname || 'X-UI' ]]</div>
+                            <div class="cb-hero-sub">X-UI {{ .cur_ver }} · Xray [[ status.xray.version ]]</div>
+                        </div>
+                    </div>
+                    <div class="cb-hero-meta">
+                        <span class="cb-pill" :class="status.xray.state === 'Running' ? 'ok' : (status.xray.state === 'Error' ? 'bad' : 'off')">
+                            [[ xrayStateLabel ]]
+                        </span>
+                        <div class="cb-meta">
+                            <span class="cb-meta-label">{{ i18n "pages.index.wanIpv4" }}</span>
+                            <span class="cb-meta-val">[[ status.hostInfo.ipv4 || '—' ]]</span>
+                        </div>
+                        <div class="cb-meta">
+                            <span class="cb-meta-label">{{ i18n "pages.index.wanIpv6" }}</span>
+                            <span class="cb-meta-val cb-ip6">[[ status.hostInfo.ipv6 || '—' ]]</span>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <a-row :gutter="16" class="cb-top-row">
+                <a-col :xs="24" :lg="16">
+                    <a-card class="cb-traffic-card">
+                        <div class="cb-card-head">
+                            <h3>{{ i18n "pages.index.realtimeTraffic" }}</h3>
+                            <span class="cb-select-pill">{{ i18n "pages.index.allInterfaces" }}</span>
+                        </div>
+                        <div class="cb-rates">
+                            <div class="cb-rate">
+                                <span class="cb-rate-label"><i class="cb-dot down"></i>{{ i18n "pages.index.download" }}</span>
+                                <span class="cb-rate-value">[[ rateFormat(status.netIO.down) ]]<small>/s</small></span>
+                            </div>
+                            <div class="cb-rate">
+                                <span class="cb-rate-label"><i class="cb-dot up"></i>{{ i18n "pages.index.upload" }}</span>
+                                <span class="cb-rate-value">[[ rateFormat(status.netIO.up) ]]<small>/s</small></span>
+                            </div>
+                            <div class="cb-rate-total">
+                                <span>{{ i18n "pages.index.sinceBoot" }}</span>
+                                <span>↓ [[ sizeFormat(status.netTraffic.recv) ]] ↑ [[ sizeFormat(status.netTraffic.sent) ]]</span>
+                            </div>
+                        </div>
+                        <div class="cb-chart">
+                            <svg viewBox="0 0 1000 220" preserveAspectRatio="none" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="cb-down-fill" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="rgba(59,130,246,.28)"/>
+                                        <stop offset="100%" stop-color="rgba(59,130,246,0)"/>
+                                    </linearGradient>
+                                </defs>
+                                <line class="cb-grid" x1="0" y1="55" x2="1000" y2="55"/>
+                                <line class="cb-grid" x1="0" y1="125" x2="1000" y2="125"/>
+                                <path class="cb-area" :d="trafficChart.downArea" fill="url(#cb-down-fill)"/>
+                                <path class="cb-line down" :d="trafficChart.downPath"/>
+                                <path class="cb-line up" :d="trafficChart.upPath"/>
+                                <circle v-if="trafficChart.ready" class="cb-end down" :cx="trafficChart.lastX" :cy="trafficChart.lastDownY" r="4"/>
+                                <circle v-if="trafficChart.ready" class="cb-end up" :cx="trafficChart.lastX" :cy="trafficChart.lastUpY" r="4"/>
+                            </svg>
+                            <span class="cb-axis max">[[ trafficChart.maxLabel ]]</span>
+                            <span class="cb-axis mid">[[ trafficChart.midLabel ]]</span>
+                            <span class="cb-axis x-left">{{ i18n "pages.index.twoMinutesAgo" }}</span>
+                            <span class="cb-axis x-right">{{ i18n "pages.index.now" }}</span>
+                        </div>
                     </a-card>
-                </a-row>
-            </transition>
-            <transition name="list" appear>
-                <a-row>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <strong>{{ i18n "pages.inbounds.stream.tcp.version" }}:</strong>
-                            <a href="https://github.com/alireza0/x-ui/releases" target="_blank">
-                                <a-tag color="purple" style="cursor: pointer;">X-UI {{ .cur_ver }}</a-tag>
-                            </a>
-                            <a-tooltip title='{{ i18n "pages.index.xraySwitch" }}'>
-                                <a-tag color="purple" style="cursor: pointer;" @click="openSelectV2rayVersion">Xray [[ status.xray.version ]]</a-tag>
-                            </a-tooltip>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <strong>{{ i18n "pages.index.operationHours" }}:</strong> 
-                            <a-tooltip>
-                                 <template slot="title">
-                                     {{ i18n "pages.index.xrayoperationHoursDesc" }}
-                                 </template>
-                                <a-tag color="blue" style="margin-right: 3px;">Xray [[ formatSecond(status.appStats.uptime) ]]</a-tag>
-                            </a-tooltip>      
-                            <a-tooltip>
-                                <template slot="title">
-                                    {{ i18n "pages.index.operationHoursDesc" }}
-                                </template>
-                                 <a-tag color="blue">OS [[ formatSecond(status.uptime) ]]</a-tag>
-                            </a-tooltip>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <strong>{{ i18n "pages.index.xrayStatus" }}:</strong>
-                            <a-tag :color="status.xray.color" style="margin-right: 3px;"><strong>[[ status.xray.state ]]</strong></a-tag>
-                            <a-popover v-if="status.xray.state === State.Error"
-                                :overlay-class-name="themeSwitcher.currentTheme">
-                                <span slot="title" style="font-size: 12pt">An error occurred while running Xray
-                                    <a-tag color="purple" style="cursor: pointer; float: right;" @click="openLogs()">{{ i18n "pages.index.logs" }}</a-tag>
-                                </span>
-                                <template slot="content">
-                                    <p style="max-width: 400px" v-for="line in status.xray.errorMsg.split('\n')">[[ line ]]</p>
-                                </template>
-                                <a-icon type="exclamation-circle"></a-icon>
-                            </a-popover>
-                            <a-tag color="purple" style="cursor: pointer; margin-right: 3px;" @click="stopXrayService">{{ i18n "pages.index.stopXray" }}</a-tag>
-                            <a-tag color="purple" style="cursor: pointer; margin-right: 3px;" @click="restartXrayService">{{ i18n "pages.index.restartXray" }}</a-tag>             
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <strong>{{ i18n "menu.link" }}:</strong>
-                            <a-tag color="purple" style="cursor: pointer; margin-right: 3px;" @click="openLogs()">{{ i18n "pages.index.logs" }}</a-tag>
-                            <a-tag color="purple" style="cursor: pointer; margin-right: 3px;" @click="openConfig">{{ i18n "pages.index.config" }}</a-tag>
-                            <a-tag color="purple" style="cursor: pointer;" @click="openBackup">{{ i18n "pages.index.backup" }}</a-tag>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <strong>{{ i18n "pages.index.systemLoad" }}:</strong> 
-                            <a-tooltip>
-                                <template slot="title">
-                                    {{ i18n "pages.index.systemLoadDesc" }}
-                                </template>
-                                <a-tag color="blue">[[ status.loads[0] ]] | [[ status.loads[1] ]] | [[ status.loads[2] ]]</a-tag>
-                            </a-tooltip>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <strong>{{ i18n "usage" }}:</strong>
-                            <a-tag color="blue" style="margin-right: 3px;">RAM [[ sizeFormat(status.appStats.mem) ]]</a-tag>
-                            <a-tag color="blue">Threads [[ status.appStats.threads ]]</a-tag>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <strong>{{ i18n "pages.index.serverInfo" }}:</strong>
-                            <a-tooltip>
-                                <template slot="title">
-                                    {{ i18n "pages.index.hostname" }}
-                                </template>
-                                <a-tag color="blue" style="margin-right: 3px;">[[ status.hostInfo.hostname ]]</a-tag>
-                            </a-tooltip>
-                            <template v-if="status.hostInfo.ipv4">    
-                                <a-tooltip>
-                                    <template slot="title">
-                                        [[ status.hostInfo.ipv4 ]]
-                                    </template>
-                                    <a-tag color="blue" style="margin-right: 3px;">IPv4</a-tag>
-                                </a-tooltip>
+                </a-col>
+                <a-col :xs="24" :lg="8">
+                    <a-card class="cb-res-card">
+                        <div class="cb-card-head">
+                            <h3>{{ i18n "pages.index.systemResources" }}</h3>
+                        </div>
+                        <div class="cb-res-rings">
+                            <div class="cb-res-ring">
+                                <a-progress type="dashboard" :width="104" :percent="status.cpu.percent"
+                                            :stroke-color="'var(--cb-blue)'" :format="percentFormat"></a-progress>
+                                <div class="cb-res-label">CPU</div>
+                                <div class="cb-res-sub">[[ status.cpuCount ]] {{ i18n "pages.index.cores" }}</div>
+                            </div>
+                            <div class="cb-res-ring">
+                                <a-progress type="dashboard" :width="104" :percent="status.mem.percent"
+                                            :stroke-color="'var(--cb-orange)'" :format="percentFormat"></a-progress>
+                                <div class="cb-res-label">{{ i18n "pages.index.memory" }}</div>
+                                <div class="cb-res-sub">[[ sizeFormat(status.mem.current) ]] / [[ sizeFormat(status.mem.total) ]]</div>
+                            </div>
+                            <div class="cb-res-ring">
+                                <a-progress type="dashboard" :width="104" :percent="status.disk.percent"
+                                            :stroke-color="'var(--cb-purple)'" :format="percentFormat"></a-progress>
+                                <div class="cb-res-label">{{ i18n "pages.index.storage" }}</div>
+                                <div class="cb-res-sub">[[ sizeFormat(status.disk.current) ]] / [[ sizeFormat(status.disk.total) ]]</div>
+                            </div>
+                        </div>
+                        <div class="cb-mem">
+                            <div class="cb-mem-head">
+                                <strong>{{ i18n "pages.index.memory" }}</strong>
+                                <span>[[ sizeFormat(status.mem.total) ]]</span>
+                            </div>
+                            <div class="cb-mem-bar">
+                                <span class="used" :style="{ width: memPercent.used + '%' }"></span>
+                                <span class="cached" :style="{ width: memPercent.cached + '%' }"></span>
+                                <span class="free" :style="{ width: memPercent.free + '%' }"></span>
+                            </div>
+                            <div class="cb-mem-legend">
+                                <span><i class="used"></i>{{ i18n "pages.index.used" }} [[ sizeFormat(memPercent.usedBytes) ]]</span>
+                                <span><i class="cached"></i>{{ i18n "pages.index.cached" }} [[ sizeFormat(memPercent.cachedBytes) ]]</span>
+                                <span><i class="free"></i>{{ i18n "pages.index.available" }} [[ sizeFormat(memPercent.freeBytes) ]]</span>
+                            </div>
+                        </div>
+                        <div class="cb-res-rows">
+                            <div class="cb-res-row">
+                                <span>{{ i18n "pages.index.systemLoad" }}</span>
+                                <span>[[ status.loads[0] ]] · [[ status.loads[1] ]] · [[ status.loads[2] ]]</span>
+                            </div>
+                            <div class="cb-res-row" v-for="(sensor, index) in status.temps" :key="index">
+                                <span>{{ i18n "pages.index.temperature" }} · [[ sensor.name ]]</span>
+                                <span>[[ sensor.temp.toFixed(1) ]] °C</span>
+                            </div>
+                        </div>
+                    </a-card>
+                </a-col>
+            </a-row>
+
+            <a-row :gutter="16" class="cb-stat-row">
+                <a-col :xs="12" :md="6">
+                    <a-card class="cb-stat-card">
+                        <div class="cb-stat-head"><span class="cb-stat-ico orange"><a-icon type="dashboard"></a-icon></span><span>{{ i18n "pages.index.operationHours" }}</span></div>
+                        <div class="cb-stat-value cb-stat-value-sm">[[ formatUptime(status.uptime) ]]</div>
+                        <div class="cb-stat-sub">[[ startTimeText(status.uptime) ]]</div>
+                    </a-card>
+                </a-col>
+                <a-col :xs="12" :md="6">
+                    <a-card class="cb-stat-card">
+                        <div class="cb-stat-head"><span class="cb-stat-ico green"><a-icon type="clock-circle"></a-icon></span><span>{{ i18n "pages.index.xrayUptime" }}</span></div>
+                        <div class="cb-stat-value cb-stat-value-sm">[[ formatUptime(status.appStats.uptime) ]]</div>
+                        <div class="cb-stat-sub">[[ startTimeText(status.appStats.uptime) ]]</div>
+                    </a-card>
+                </a-col>
+                <a-col :xs="12" :md="6">
+                    <a-card class="cb-stat-card">
+                        <div class="cb-stat-head"><span class="cb-stat-ico blue"><a-icon type="link"></a-icon></span><span>TCP</span></div>
+                        <div class="cb-stat-value">[[ status.tcpCount ]]</div>
+                        <div class="cb-stat-sub">{{ i18n "pages.index.currentConnections" }}</div>
+                    </a-card>
+                </a-col>
+                <a-col :xs="12" :md="6">
+                    <a-card class="cb-stat-card">
+                        <div class="cb-stat-head"><span class="cb-stat-ico purple"><a-icon type="swap"></a-icon></span><span>UDP</span></div>
+                        <div class="cb-stat-value">[[ status.udpCount ]]</div>
+                        <div class="cb-stat-sub">{{ i18n "pages.index.currentConnections" }}</div>
+                    </a-card>
+                </a-col>
+            </a-row>
+
+            <a-row :gutter="16" class="cb-manage-row">
+                <a-col :xs="24" :sm="12" :md="6">
+                    <a-card hoverable>
+                        <strong>{{ i18n "pages.inbounds.stream.tcp.version" }}:</strong>
+                        <a href="https://github.com/alireza0/x-ui/releases" target="_blank">
+                            <a-tag color="purple" style="cursor: pointer;">X-UI {{ .cur_ver }}</a-tag>
+                        </a>
+                        <a-tooltip title='{{ i18n "pages.index.xraySwitch" }}'>
+                            <a-tag color="purple" style="cursor: pointer;" @click="openSelectV2rayVersion">Xray [[ status.xray.version ]]</a-tag>
+                        </a-tooltip>
+                    </a-card>
+                </a-col>
+                <a-col :xs="24" :sm="12" :md="6">
+                    <a-card hoverable>
+                        <strong>{{ i18n "pages.index.xrayStatus" }}:</strong>
+                        <a-tag :color="status.xray.color" style="margin-right: 3px;"><strong>[[ status.xray.state ]]</strong></a-tag>
+                        <a-popover v-if="status.xray.state === State.Error"
+                            :overlay-class-name="themeSwitcher.currentTheme">
+                            <span slot="title" style="font-size: 12pt">An error occurred while running Xray
+                                <a-tag color="purple" style="cursor: pointer; float: right;" @click="openLogs()">{{ i18n "pages.index.logs" }}</a-tag>
+                            </span>
+                            <template slot="content">
+                                <p style="max-width: 400px" v-for="line in status.xray.errorMsg.split('\n')">[[ line ]]</p>
                             </template>
-                            <template v-if="status.hostInfo.ipv6">
-                                <a-tooltip>
-                                    <template slot="title">
-                                        [[ status.hostInfo.ipv6 ]]
-                                    </template>
-                                    <a-tag color="blue" style="margin-right: 3px;">IPv6</a-tag>
-                                </a-tooltip>
-                            </template>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <a-row>
-                                <a-col :span="12">
-                                    <a-icon type="swap"></a-icon>    
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            {{ i18n "pages.index.connectionTcpCountDesc" }}
-                                        </template>
-                                        <strong>TCP:</Strong> <a-tag>[[ status.tcpCount ]]</a-tag>
-                                    </a-tooltip>
-                                </a-col>
-                                <a-col :span="12">
-                                    <a-icon type="swap"></a-icon>
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            {{ i18n "pages.index.connectionUdpCountDesc" }}
-                                        </template>
-                                        <strong>UDP:</strong> <a-tag>[[ status.udpCount ]]</a-tag>
-                                    </a-tooltip>
-                                </a-col>
-                            </a-row>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <a-row>
-                                <a-col :span="12">
-                                    <a-icon type="arrow-up"></a-icon>
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            {{ i18n "pages.index.upSpeed" }}
-                                        </template>
-                                        <strong>Up:</strong> [[ sizeFormat(status.netIO.up) ]]/s
-                                    </a-tooltip>
-                                </a-col>
-                                <a-col :span="12">
-                                    <a-icon type="arrow-down"></a-icon>
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            {{ i18n "pages.index.downSpeed" }}
-                                        </template>
-                                        <strong>Down:</strong> [[ sizeFormat(status.netIO.down) ]]/s
-                                    </a-tooltip>
-                                </a-col>
-                            </a-row>
-                        </a-card>
-                    </a-col>
-                    <a-col :sm="24" :md="12">
-                        <a-card hoverable>
-                            <a-row>
-                                <a-col :span="12">
-                                    <a-icon type="cloud-upload"></a-icon>
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            {{ i18n "pages.index.totalSent" }}
-                                        </template>
-                                        <strong>Out:</strong> [[ sizeFormat(status.netTraffic.sent) ]]
-                                    </a-tooltip>
-                                </a-col>
-                                <a-col :span="12">
-                                    <a-icon type="cloud-download"></a-icon>
-                                    <a-tooltip>
-                                        <template slot="title">
-                                            {{ i18n "pages.index.totalReceive" }}
-                                        </template>
-                                       <strong>In:</strong> [[ sizeFormat(status.netTraffic.recv) ]]
-                                    </a-tooltip>
-                                </a-col>
-                            </a-row>
-                        </a-card>
-                    </a-col>
-                </a-row>
-            </transition>
+                            <a-icon type="exclamation-circle"></a-icon>
+                        </a-popover>
+                        <a-tag color="purple" style="cursor: pointer; margin-right: 3px;" @click="stopXrayService">{{ i18n "pages.index.stopXray" }}</a-tag>
+                        <a-tag color="purple" style="cursor: pointer; margin-right: 3px;" @click="restartXrayService">{{ i18n "pages.index.restartXray" }}</a-tag>
+                    </a-card>
+                </a-col>
+                <a-col :xs="24" :sm="12" :md="6">
+                    <a-card hoverable>
+                        <strong>{{ i18n "menu.link" }}:</strong>
+                        <a-tag color="purple" style="cursor: pointer; margin-right: 3px;" @click="openLogs()">{{ i18n "pages.index.logs" }}</a-tag>
+                        <a-tag color="purple" style="cursor: pointer; margin-right: 3px;" @click="openConfig">{{ i18n "pages.index.config" }}</a-tag>
+                        <a-tag color="purple" style="cursor: pointer;" @click="openBackup">{{ i18n "pages.index.backup" }}</a-tag>
+                    </a-card>
+                </a-col>
+                <a-col :xs="24" :sm="12" :md="6">
+                    <a-card hoverable>
+                        <strong>{{ i18n "usage" }}:</strong>
+                        <a-tag color="blue" style="margin-right: 3px;">RAM [[ sizeFormat(status.appStats.mem) ]]</a-tag>
+                        <a-tag color="blue">Threads [[ status.appStats.threads ]]</a-tag>
+                    </a-card>
+                </a-col>
+            </a-row>
         </a-layout-content>
+
     </a-layout>
 
     <a-modal id="version-modal" v-model="versionModal.visible" title='{{ i18n "pages.index.xraySwitch" }}'
@@ -350,9 +332,11 @@
 
     class CurTotal {
 
-        constructor(current, total) {
+        constructor(current, total, cached = 0, available = 0) {
             this.current = current;
             this.total = total;
+            this.cached = cached;
+            this.available = available;
         }
 
         get percent() {
@@ -360,17 +344,6 @@
                 return 0;
             }
             return toFixed(this.current / this.total * 100, 2);
-        }
-
-        get color() {
-            const percent = this.percent;
-            if (percent < 80) {
-                return '#0e49b5';
-            } else if (percent < 90) {
-                return '#ffa031';
-            } else {
-                return '#e04141';
-            }
         }
     }
 
@@ -389,6 +362,7 @@
             this.uptime = 0;
             this.appUptime = 0;
             this.appStats = {threads: 0, mem: 0, uptime: 0};
+            this.temps = [];
             this.hostInfo = {hostname:"", ipv4: "", ipv6: ""};
             this.xray = {state: State.Stop, errorMsg: "", version: "", color: ""};
 
@@ -399,7 +373,7 @@
             this.cpuCount = data.cpuCount;
             this.disk = new CurTotal(data.disk.current, data.disk.total);
             this.loads = data.loads.map(load => toFixed(load, 2));
-            this.mem = new CurTotal(data.mem.current, data.mem.total);
+            this.mem = new CurTotal(data.mem.current, data.mem.total, data.mem.cached, data.mem.available);
             this.netIO = data.netIO;
             this.netTraffic = data.netTraffic;
             this.swap = new CurTotal(data.swap.current, data.swap.total);
@@ -408,6 +382,7 @@
             this.uptime = data.uptime;
             this.appUptime = data.appUptime;
             this.appStats = data.appStats;
+            this.temps = (data.temps || []).map(temp => ({name: temp.name, temp: Number(temp.temp)}));
             this.hostInfo = data.hostInfo;
             this.xray = data.xray;
             switch (this.xray.state) {
@@ -527,6 +502,82 @@
             spinning: false,
             loadingTip: '{{ i18n "loading"}}',
             showAlert: false,
+            trafficHistory: [],
+            i18nOnline: '{{ i18n "pages.index.online" }}',
+            i18nOffline: '{{ i18n "pages.index.offline" }}',
+            i18nError: '{{ i18n "pages.index.error" }}',
+            sincePrefix: '{{ i18n "pages.index.since" }}',
+            sinceSuffix: '{{ i18n "pages.index.sinceEnd" }}',
+            uptimeUnits: {
+                d: '{{ i18n "pages.index.unitDays" }}',
+                h: '{{ i18n "pages.index.unitHours" }}',
+                m: '{{ i18n "pages.index.unitMinutes" }}',
+                s: '{{ i18n "pages.index.unitSeconds" }}',
+            },
+        },
+        computed: {
+            xrayStateLabel() {
+                if (this.status.xray.state === State.Running) {
+                    return this.i18nOnline;
+                }
+                if (this.status.xray.state === State.Error) {
+                    return this.i18nError;
+                }
+                return this.i18nOffline;
+            },
+            memPercent() {
+                const total = Number(this.status.mem.total) || 0;
+                const used = Number(this.status.mem.current) || 0;
+                const cached = Number(this.status.mem.cached) || 0;
+                const available = Math.max(0, total - used - cached);
+                const sum = used + cached + available;
+                if (!sum) {
+                    return {used: 0, cached: 0, free: 100, usedBytes: 0, cachedBytes: 0, freeBytes: 0};
+                }
+                return {
+                    used: used / sum * 100,
+                    cached: cached / sum * 100,
+                    free: available / sum * 100,
+                    usedBytes: used,
+                    cachedBytes: cached,
+                    freeBytes: available,
+                };
+            },
+            trafficChart() {
+                const points = this.trafficHistory;
+                const n = points.length;
+                const width = 1000;
+                const top = 14;
+                const bottom = 196;
+                let peak = 0;
+                for (const p of points) {
+                    peak = Math.max(peak, p.down, p.up);
+                }
+                const max = this.trafficMax(peak);
+                const xy = (i, value) => [
+                    n > 1 ? (i / (n - 1)) * width : width,
+                    bottom - (value / max) * (bottom - top),
+                ];
+                const downPoints = points.map((p, i) => xy(i, p.down));
+                const upPoints = points.map((p, i) => xy(i, p.up));
+                const downPath = this.smoothPath(downPoints);
+                const upPath = this.smoothPath(upPoints);
+                let downArea = '';
+                if (n > 1) {
+                    downArea = `${downPath} L ${downPoints[n - 1][0].toFixed(1)},${bottom} L ${downPoints[0][0].toFixed(1)},${bottom} Z`;
+                }
+                return {
+                    ready: n > 1,
+                    downPath,
+                    upPath,
+                    downArea,
+                    lastX: n ? downPoints[n - 1][0] : width,
+                    lastDownY: n ? downPoints[n - 1][1] : bottom,
+                    lastUpY: n ? upPoints[n - 1][1] : bottom,
+                    maxLabel: this.rateFormat(max) + '/s',
+                    midLabel: this.rateFormat(max / 2) + '/s',
+                };
+            },
         },
         methods: {
             loading(spinning, tip = '{{ i18n "loading"}}') {
@@ -541,6 +592,92 @@
             },
             setStatus(data) {
                 this.status = new Status(data);
+                this.pushTrafficSample();
+            },
+            pushTrafficSample() {
+                const now = Date.now();
+                this.trafficHistory.push({
+                    t: now,
+                    down: Number(this.status.netIO.down) || 0,
+                    up: Number(this.status.netIO.up) || 0,
+                });
+                const cutoff = now - 120000;
+                while (this.trafficHistory.length > 2 && this.trafficHistory[0].t < cutoff) {
+                    this.trafficHistory.shift();
+                }
+            },
+            percentFormat(percent) {
+                return Math.round(percent) + '%';
+            },
+            rateFormat(size) {
+                const text = sizeFormat(size);
+                const matched = text.match(/^([\d.]+) (\w+)$/);
+                if (!matched) {
+                    return text;
+                }
+                const value = parseFloat(matched[1]);
+                return (value >= 100 ? value.toFixed(0) : value.toFixed(1)) + ' ' + matched[2];
+            },
+            formatUptime(seconds) {
+                seconds = Math.max(0, Math.floor(Number(seconds) || 0));
+                const days = Math.floor(seconds / 86400);
+                const hours = Math.floor(seconds % 86400 / 3600);
+                const minutes = Math.floor(seconds % 3600 / 60);
+                const secs = seconds % 60;
+                const units = this.uptimeUnits;
+                if (days > 0) {
+                    return hours > 0 ? `${days} ${units.d} ${hours} ${units.h}` : `${days} ${units.d}`;
+                }
+                if (hours > 0) {
+                    return minutes > 0 ? `${hours} ${units.h} ${minutes} ${units.m}` : `${hours} ${units.h}`;
+                }
+                if (minutes > 0) {
+                    return `${minutes} ${units.m}`;
+                }
+                return `${secs} ${units.s}`;
+            },
+            startTimeText(seconds) {
+                const uptime = Number(seconds) || 0;
+                if (!uptime) {
+                    return '—';
+                }
+                const started = new Date(Date.now() - uptime * 1000);
+                const isEnglish = /(?:^|;\s*)lang=en/i.test(document.cookie);
+                const timeText = started.toLocaleString(isEnglish ? 'en-US' : 'zh-CN', {
+                    month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                });
+                return this.sincePrefix + ' ' + timeText + (this.sinceSuffix ? ' ' + this.sinceSuffix : '');
+            },
+            trafficMax(peak) {
+                if (!peak || peak <= 0) {
+                    return ONE_MB;
+                }
+                const target = peak * 1.15;
+                const unit = Math.pow(10, Math.floor(Math.log10(target)));
+                const scaled = target / unit;
+                const step = scaled <= 1 ? 1 : scaled <= 2 ? 2 : scaled <= 5 ? 5 : 10;
+                return step * unit;
+            },
+            smoothPath(points) {
+                if (!points.length) {
+                    return '';
+                }
+                if (points.length === 1) {
+                    return `M ${points[0][0].toFixed(1)} ${points[0][1].toFixed(1)}`;
+                }
+                let path = `M ${points[0][0].toFixed(1)} ${points[0][1].toFixed(1)}`;
+                for (let i = 0; i < points.length - 1; i++) {
+                    const p0 = points[i - 1] || points[i];
+                    const p1 = points[i];
+                    const p2 = points[i + 1];
+                    const p3 = points[i + 2] || p2;
+                    const c1x = p1[0] + (p2[0] - p0[0]) / 6;
+                    const c1y = p1[1] + (p2[1] - p0[1]) / 6;
+                    const c2x = p2[0] - (p3[0] - p1[0]) / 6;
+                    const c2y = p2[1] - (p3[1] - p1[1]) / 6;
+                    path += ` C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+                }
+                return path;
             },
             async openSelectV2rayVersion() {
                 this.loading(true);
