@@ -446,7 +446,11 @@
 /* daily traffic ranking */
 
 .cb-rank-row {
-    margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    row-gap: 16px;
+    margin: 16px 0 8px;
 }
 
 .cb-rank-row > .ant-col {
@@ -571,6 +575,55 @@
     padding: 14px 2px 6px;
     color: var(--cb-text-3);
     font-size: 12.5px;
+}
+
+.cb-exp-card {
+    width: 100%;
+}
+
+.cb-exp-ico {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: var(--cb-accent-t);
+    color: var(--cb-accent);
+    font-size: 12px;
+}
+
+.cb-exp-chip {
+    flex: none;
+    padding: 2px 9px;
+    border-radius: 8px;
+    background: var(--cb-fill);
+    color: var(--cb-text-2);
+    font-size: 11.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.cb-exp-chip.warn {
+    background: var(--cb-orange-t);
+    color: var(--cb-orange);
+}
+
+.cb-exp-chip.bad {
+    background: var(--cb-red-t);
+    color: var(--cb-red);
+}
+
+.cb-exp-date {
+    flex: none;
+    min-width: 92px;
+    text-align: right;
+    color: var(--cb-text-2);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 .carbon-dash .ant-card-hoverable:hover {
@@ -1300,6 +1353,11 @@
 
     .cb-rank-size {
         min-width: 62px;
+    }
+
+    .cb-exp-date {
+        min-width: 0;
+        font-size: 11.5px;
     }
 
     .cb-stat-value {

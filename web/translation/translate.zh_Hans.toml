@@ -148,6 +148,10 @@
 "rankToday" = "今日"
 "rankYesterday" = "昨日"
 "rankEmpty" = "暂无数据，按日统计从升级后开始累计"
+"clientExpiry" = "客户端到期"
+"expireNone" = "暂无启用中的到期客户端"
+"expired" = "已过期"
+"expiresToday" = "今日到期"
 
 [pages.inbounds]
 "title" = "入站列表"

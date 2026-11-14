@@ -148,6 +148,10 @@
 "rankToday" = "Today"
 "rankYesterday" = "Yesterday"
 "rankEmpty" = "No data yet — daily totals accumulate from this update on"
+"clientExpiry" = "Client Expiry"
+"expireNone" = "No clients with an expiry date"
+"expired" = "Expired"
+"expiresToday" = "Expires today"
 
 [pages.inbounds]
 "title" = "Inbounds"

@@ -238,7 +238,7 @@
             </a-row>
 
             <a-row :gutter="16" class="cb-rank-row">
-                <a-col :span="24">
+                <a-col :xs="24" :md="12">
                     <a-card class="cb-rank-card">
                         <div class="cb-card-head">
                             <span class="cb-card-title">{{ i18n "pages.index.trafficRank" }}</span>
@@ -260,6 +260,22 @@
                             </div>
                         </div>
                         <div class="cb-rank-empty" v-else>{{ i18n "pages.index.rankEmpty" }}</div>
+                    </a-card>
+                </a-col>
+                <a-col :xs="24" :md="12">
+                    <a-card class="cb-rank-card cb-exp-card">
+                        <div class="cb-card-head">
+                            <span class="cb-card-title">{{ i18n "pages.index.clientExpiry" }}</span>
+                        </div>
+                        <div class="cb-rank-list" v-if="expiryItems.length">
+                            <div class="cb-rank-item" v-for="item in expiryItems" :key="item.email">
+                                <span class="cb-exp-ico"><a-icon type="clock-circle"></a-icon></span>
+                                <span class="cb-rank-email" :title="item.email">[[ item.email ]]</span>
+                                <span class="cb-exp-chip" :class="expiryChipClass(item)">[[ expiryDaysText(item) ]]</span>
+                                <span class="cb-exp-date">[[ expiryDateText(item) ]]</span>
+                            </div>
+                        </div>
+                        <div class="cb-rank-empty" v-else>{{ i18n "pages.index.expireNone" }}</div>
                     </a-card>
                 </a-col>
             </a-row>
@@ -532,6 +548,7 @@
             trafficHistory: [],
             rankTab: 'today',
             rank: {today: [], yesterday: []},
+            expiryItems: [],
             i18nOnline: '{{ i18n "pages.index.online" }}',
             i18nOffline: '{{ i18n "pages.index.offline" }}',
             i18nError: '{{ i18n "pages.index.error" }}',
@@ -543,6 +560,8 @@
                 m: '{{ i18n "pages.index.unitMinutes" }}',
                 s: '{{ i18n "pages.index.unitSeconds" }}',
             },
+            expiredText: '{{ i18n "pages.index.expired" }}',
+            expiresTodayText: '{{ i18n "pages.index.expiresToday" }}',
         },
         computed: {
             xrayStateLabel() {
@@ -648,6 +667,40 @@
                     return '0%';
                 }
                 return Math.max(2, Number(item.total) / max * 100).toFixed(1) + '%';
+            },
+            async getClientExpiry() {
+                try {
+                    const msg = await HttpUtil.get('/server/clientExpiry');
+                    if (msg.success && msg.obj) {
+                        this.expiryItems = msg.obj;
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+            expiryChipClass(item) {
+                if (item.daysLeft < 0) {
+                    return 'bad';
+                }
+                if (item.daysLeft <= 3) {
+                    return 'warn';
+                }
+                return '';
+            },
+            expiryDaysText(item) {
+                if (item.daysLeft < 0) {
+                    return this.expiredText;
+                }
+                if (item.daysLeft === 0) {
+                    return this.expiresTodayText;
+                }
+                return item.daysLeft + ' ' + this.uptimeUnits.d;
+            },
+            expiryDateText(item) {
+                const isEnglish = /(?:^;\s*)lang=en/i.test(document.cookie);
+                return new Date(item.expiryTime).toLocaleString(isEnglish ? 'en-US' : 'zh-CN', {
+                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                });
             },
             pushTrafficSample() {
                 const now = Date.now();
@@ -842,6 +895,7 @@
                 this.showAlert = true;
             }
             this.getTrafficRank();
+            this.getClientExpiry();
             let tick = 0;
             while (true) {
                 try {
@@ -851,6 +905,7 @@
                 }
                 if (++tick % 15 === 0) {
                     this.getTrafficRank();
+                    this.getClientExpiry();
                 }
                 await PromiseUtil.sleep(2000);
             }
