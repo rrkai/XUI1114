@@ -43,8 +43,13 @@ func (lw *LogWriter) Write(m []byte) (n int, err error) {
 			msgBody := matches[3]
 			msgBodyLower := strings.ToLower(msgBody)
 
+			// The REALITY non-443 warning and the VMess deprecation notice are
+			// expected on a multi-port deployment with a pinned Xray and would
+			// only flood the log.
 			if strings.Contains(msgBodyLower, "tls handshake error") ||
-				strings.Contains(msgBodyLower, "connection ends") {
+				strings.Contains(msgBodyLower, "connection ends") ||
+				strings.Contains(msgBodyLower, "listening on non-443 ports may get your ip blocked by the gfw") ||
+				(strings.Contains(msgBodyLower, "vmess") && strings.Contains(msgBodyLower, "is deprecated, not recommended")) {
 				logger.Debug("XRAY: " + msgBody)
 				lw.lastLine = ""
 				continue
