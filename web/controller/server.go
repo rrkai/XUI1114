@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
+	"unicode/utf8"
 
+	"github.com/alireza0/x-ui/util/common"
 	"github.com/alireza0/x-ui/web/global"
 	"github.com/alireza0/x-ui/web/network"
 	"github.com/alireza0/x-ui/web/service"
@@ -60,6 +63,7 @@ func (a *ServerController) initRouter(g *gin.RouterGroup) {
 	g.POST("/installXray/:version", a.installXray)
 	g.POST("/logs/:count", a.getLogs)
 	g.POST("/importDB", a.importDB)
+	g.POST("/panelTitle", a.setPanelTitle)
 }
 
 func (a *ServerController) refreshStatus() {
@@ -97,6 +101,22 @@ func (a *ServerController) clientExpiry(c *gin.Context) {
 func (a *ServerController) remainingTraffic(c *gin.Context) {
 	items, err := a.serverService.GetRemainingTraffic(10)
 	jsonObj(c, items, err)
+}
+
+func (a *ServerController) setPanelTitle(c *gin.Context) {
+	title := strings.TrimSpace(c.PostForm("title"))
+	if utf8.RuneCountInString(title) > 64 {
+		jsonMsg(c, "set panel title", common.NewError("panel title is too long"))
+		return
+	}
+	var settingService service.SettingService
+	if err := settingService.SetPanelTitle(title); err != nil {
+		jsonMsg(c, "set panel title", err)
+		return
+	}
+	a.lastGetStatusTime = time.Now()
+	a.refreshStatus()
+	jsonMsg(c, "set panel title", nil)
 }
 
 func (a *ServerController) getXrayVersion(c *gin.Context) {

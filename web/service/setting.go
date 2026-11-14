@@ -28,6 +28,7 @@ var defaultValueMap = map[string]string{
 	"webKeyFile":         "",
 	"secret":             random.Seq(32),
 	"webBasePath":        "/",
+	"panelTitle":         "",
 	"sessionMaxAge":      "0",
 	"pageSize":           "0",
 	"expireDiff":         "0",
@@ -349,6 +350,14 @@ func (s *SettingService) GetBasePath() (string, error) {
 		basePath += "/"
 	}
 	return basePath, nil
+}
+
+func (s *SettingService) GetPanelTitle() (string, error) {
+	return s.getString("panelTitle")
+}
+
+func (s *SettingService) SetPanelTitle(title string) error {
+	return s.setString("panelTitle", title)
 }
 
 func (s *SettingService) GetTimeLocation() (*time.Location, error) {

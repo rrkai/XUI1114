@@ -720,15 +720,36 @@
 }
 
 .cb-hero-title {
+    display: flex;
+    align-items: center;
     max-width: 46ch;
     color: var(--cb-text);
     font-size: 22px;
     font-weight: 700;
     letter-spacing: -.01em;
     line-height: 1.25;
+}
+
+.cb-hero-title-text {
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.cb-hero-edit {
+    flex: none;
+    margin-left: 8px;
+    font-size: 14px;
+    color: var(--cb-text-2);
+    opacity: .55;
+    cursor: pointer;
+    transition: opacity .15s ease, color .15s ease;
+}
+
+.cb-hero-edit:hover {
+    opacity: 1;
+    color: var(--cb-accent);
 }
 
 .cb-hero-sub {
@@ -774,6 +795,26 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.cb-copy {
+    cursor: pointer;
+    transition: color .15s ease;
+}
+
+.cb-copy:hover {
+    color: var(--cb-accent);
+}
+
+.cb-copy-ico {
+    margin-left: 6px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+
+.cb-copy:hover .cb-copy-ico {
+    opacity: .75;
 }
 
 .cb-pill {

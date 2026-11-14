@@ -40,7 +40,10 @@
                     <div class="cb-hero-id">
                         <span class="cb-hero-logo">X</span>
                         <div class="cb-hero-text">
-                            <div class="cb-hero-title">[[ status.hostInfo.hostname || 'X-UI' ]]</div>
+                            <div class="cb-hero-title">
+                                <span class="cb-hero-title-text">[[ status.hostInfo.hostname || 'X-UI' ]]</span>
+                                <a-icon class="cb-hero-edit" type="edit" title='{{ i18n "pages.index.editHostname" }}' @click="openHostTitleEdit"></a-icon>
+                            </div>
                             <div class="cb-hero-sub">X-UI {{ .cur_ver }} · Xray [[ status.xray.version ]]</div>
                         </div>
                     </div>
@@ -50,60 +53,17 @@
                         </span>
                         <div class="cb-meta">
                             <span class="cb-meta-label">{{ i18n "pages.index.wanIpv4" }}</span>
-                            <span class="cb-meta-val">[[ status.hostInfo.ipv4 || '—' ]]</span>
+                            <span class="cb-meta-val cb-copy" title='{{ i18n "pages.index.clickCopy" }}' @click="copyText(status.hostInfo.ipv4)">[[ status.hostInfo.ipv4 || '—' ]]<a-icon v-if="status.hostInfo.ipv4" class="cb-copy-ico" type="copy"></a-icon></span>
                         </div>
                         <div class="cb-meta">
                             <span class="cb-meta-label">{{ i18n "pages.index.wanIpv6" }}</span>
-                            <span class="cb-meta-val cb-ip6">[[ status.hostInfo.ipv6 || '—' ]]</span>
+                            <span class="cb-meta-val cb-ip6 cb-copy" title='{{ i18n "pages.index.clickCopy" }}' @click="copyText(status.hostInfo.ipv6)">[[ status.hostInfo.ipv6 || '—' ]]<a-icon v-if="status.hostInfo.ipv6" class="cb-copy-ico" type="copy"></a-icon></span>
                         </div>
                     </div>
                 </div>
             </transition>
 
             <a-row :gutter="16" class="cb-top-row">
-                <a-col :xs="24" :lg="16">
-                    <a-card class="cb-traffic-card">
-                        <div class="cb-card-head">
-                            <h3>{{ i18n "pages.index.realtimeTraffic" }}</h3>
-                            <span class="cb-select-pill">{{ i18n "pages.index.allInterfaces" }}</span>
-                        </div>
-                        <div class="cb-rates">
-                            <div class="cb-rate">
-                                <span class="cb-rate-label"><i class="cb-dot down"></i>{{ i18n "pages.index.download" }}</span>
-                                <span class="cb-rate-value">[[ rateFormat(status.netIO.down) ]]<small>/s</small></span>
-                            </div>
-                            <div class="cb-rate">
-                                <span class="cb-rate-label"><i class="cb-dot up"></i>{{ i18n "pages.index.upload" }}</span>
-                                <span class="cb-rate-value">[[ rateFormat(status.netIO.up) ]]<small>/s</small></span>
-                            </div>
-                            <div class="cb-rate-total">
-                                <span>{{ i18n "pages.index.sinceBoot" }}</span>
-                                <span>↓ [[ sizeFormat(status.netTraffic.recv) ]] ↑ [[ sizeFormat(status.netTraffic.sent) ]]</span>
-                            </div>
-                        </div>
-                        <div class="cb-chart">
-                            <svg viewBox="0 0 1000 220" preserveAspectRatio="none" aria-hidden="true">
-                                <defs>
-                                    <linearGradient id="cb-down-fill" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stop-color="rgba(59,130,246,.28)"/>
-                                        <stop offset="100%" stop-color="rgba(59,130,246,0)"/>
-                                    </linearGradient>
-                                </defs>
-                                <line class="cb-grid" x1="0" y1="55" x2="1000" y2="55"/>
-                                <line class="cb-grid" x1="0" y1="125" x2="1000" y2="125"/>
-                                <path class="cb-area" :d="trafficChart.downArea" fill="url(#cb-down-fill)"/>
-                                <path class="cb-line down" :d="trafficChart.downPath"/>
-                                <path class="cb-line up" :d="trafficChart.upPath"/>
-                                <circle v-if="trafficChart.ready" class="cb-end down" :cx="trafficChart.lastX" :cy="trafficChart.lastDownY" r="4"/>
-                                <circle v-if="trafficChart.ready" class="cb-end up" :cx="trafficChart.lastX" :cy="trafficChart.lastUpY" r="4"/>
-                            </svg>
-                            <span class="cb-axis max">[[ trafficChart.maxLabel ]]</span>
-                            <span class="cb-axis mid">[[ trafficChart.midLabel ]]</span>
-                            <span class="cb-axis x-left">{{ i18n "pages.index.twoMinutesAgo" }}</span>
-                            <span class="cb-axis x-right">{{ i18n "pages.index.now" }}</span>
-                        </div>
-                    </a-card>
-                </a-col>
                 <a-col :xs="24" :lg="8">
                     <a-card class="cb-res-card">
                         <div class="cb-card-head">
@@ -154,6 +114,49 @@
                                 <span>{{ i18n "pages.index.temperature" }} · [[ sensor.name ]]</span>
                                 <span>[[ sensor.temp.toFixed(1) ]] °C</span>
                             </div>
+                        </div>
+                    </a-card>
+                </a-col>
+                <a-col :xs="24" :lg="16">
+                    <a-card class="cb-traffic-card">
+                        <div class="cb-card-head">
+                            <h3>{{ i18n "pages.index.realtimeTraffic" }}</h3>
+                            <span class="cb-select-pill">{{ i18n "pages.index.allInterfaces" }}</span>
+                        </div>
+                        <div class="cb-rates">
+                            <div class="cb-rate">
+                                <span class="cb-rate-label"><i class="cb-dot down"></i>{{ i18n "pages.index.download" }}</span>
+                                <span class="cb-rate-value">[[ rateFormat(status.netIO.down) ]]<small>/s</small></span>
+                            </div>
+                            <div class="cb-rate">
+                                <span class="cb-rate-label"><i class="cb-dot up"></i>{{ i18n "pages.index.upload" }}</span>
+                                <span class="cb-rate-value">[[ rateFormat(status.netIO.up) ]]<small>/s</small></span>
+                            </div>
+                            <div class="cb-rate-total">
+                                <span>{{ i18n "pages.index.sinceBoot" }}</span>
+                                <span>↓ [[ sizeFormat(status.netTraffic.recv) ]] ↑ [[ sizeFormat(status.netTraffic.sent) ]]</span>
+                            </div>
+                        </div>
+                        <div class="cb-chart">
+                            <svg viewBox="0 0 1000 220" preserveAspectRatio="none" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="cb-down-fill" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="rgba(59,130,246,.28)"/>
+                                        <stop offset="100%" stop-color="rgba(59,130,246,0)"/>
+                                    </linearGradient>
+                                </defs>
+                                <line class="cb-grid" x1="0" y1="55" x2="1000" y2="55"/>
+                                <line class="cb-grid" x1="0" y1="125" x2="1000" y2="125"/>
+                                <path class="cb-area" :d="trafficChart.downArea" fill="url(#cb-down-fill)"/>
+                                <path class="cb-line down" :d="trafficChart.downPath"/>
+                                <path class="cb-line up" :d="trafficChart.upPath"/>
+                                <circle v-if="trafficChart.ready" class="cb-end down" :cx="trafficChart.lastX" :cy="trafficChart.lastDownY" r="4"/>
+                                <circle v-if="trafficChart.ready" class="cb-end up" :cx="trafficChart.lastX" :cy="trafficChart.lastUpY" r="4"/>
+                            </svg>
+                            <span class="cb-axis max">[[ trafficChart.maxLabel ]]</span>
+                            <span class="cb-axis mid">[[ trafficChart.midLabel ]]</span>
+                            <span class="cb-axis x-left">{{ i18n "pages.index.twoMinutesAgo" }}</span>
+                            <span class="cb-axis x-right">{{ i18n "pages.index.now" }}</span>
                         </div>
                     </a-card>
                 </a-col>
@@ -377,6 +380,13 @@
         </a-space>
     </a-modal>
 
+    <a-modal id="hostname-modal" v-model="hostTitleModal.visible" title='{{ i18n "pages.index.editHostname" }}'
+             :closable="true" :class="themeSwitcher.currentTheme"
+             :ok-text="hostTitleModal.okText" cancel-text='{{ i18n "cancel" }}'
+             :confirm-loading="hostTitleModal.saving" @ok="saveHostTitle">
+        <a-input v-model="hostTitleModal.value" maxLength="64" placeholder='{{ i18n "pages.index.hostnameHint" }}'></a-input>
+    </a-modal>
+
 </a-layout>
 {{template "js" .}}
 {{template "component/themeSwitcher" .}}
@@ -548,6 +558,16 @@
         },
     };
 
+    const hostTitleModal = {
+        visible: false,
+        value: '',
+        saving: false,
+        okText: '{{ i18n "confirm" }}',
+        hide() {
+            this.visible = false;
+        },
+    };
+
     const app = new Vue({
         delimiters: ['[[', ']]'],
         el: '#app',
@@ -558,6 +578,7 @@
             versionModal,
             logModal,
             backupModal,
+            hostTitleModal,
             spinning: false,
             loadingTip: '{{ i18n "loading"}}',
             showAlert: false,
@@ -662,6 +683,31 @@
             setStatus(data) {
                 this.status = new Status(data);
                 this.pushTrafficSample();
+            },
+            openHostTitleEdit() {
+                hostTitleModal.value = this.status.hostInfo.hostname || '';
+                hostTitleModal.visible = true;
+            },
+            async saveHostTitle() {
+                const title = (hostTitleModal.value || '').trim();
+                hostTitleModal.saving = true;
+                const msg = await HttpUtil.post('server/panelTitle', {title});
+                hostTitleModal.saving = false;
+                if (!msg.success) {
+                    return;
+                }
+                hostTitleModal.hide();
+                await this.getStatus();
+            },
+            copyText(text) {
+                if (!text) {
+                    return;
+                }
+                ClipboardUtil.copyToClipboard(text).then(success => {
+                    if (success) {
+                        app.$message.success('{{ i18n "copied" }}');
+                    }
+                });
             },
             async getTrafficRank() {
                 try {

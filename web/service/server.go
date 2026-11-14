@@ -280,6 +280,10 @@ func (s *ServerService) GetStatus(lastStatus *Status) *Status {
 	}
 
 	status.HostInfo.HostName, _ = os.Hostname()
+	var settingService SettingService
+	if panelTitle, err := settingService.GetPanelTitle(); err == nil && panelTitle != "" {
+		status.HostInfo.HostName = panelTitle
+	}
 
 	// get ip address
 	netInterfaces, _ := net.Interfaces()
