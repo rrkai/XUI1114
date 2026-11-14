@@ -14,7 +14,7 @@
 | 界面语言 | 仅保留中文 / English，默认强制中文；不再根据浏览器 `Accept-Language` 自动切换，只认语言 cookie |
 | 默认时区 | `Asia/Shanghai`（新建数据库生效；导入旧库后可在设置页修改） |
 | 管理脚本 | `x-ui.sh` 全菜单汉化，安装 / 更新 / 重装地址全部指向本仓库 |
-| Xray 版本 | 固定 `v26.6.27`，面板内不可切换到其他版本 |
+| Xray 版本 | 默认安装 `v26.6.27`；可在面板首页的版本弹窗中切换其他版本（列表最低 `v26.4.25`，离线时回退为默认版本） |
 | 出站列表 | 与入站一致的分页 + 全字段搜索（tag、协议、地址、端口、settings/streamSettings 内容） |
 | SQLite | WAL + `synchronous=NORMAL` + `busy_timeout=10s` + `txlock=IMMEDIATE`；`cache_size` 按内存自动（感知 cgroup，可用环境变量覆盖）；连接池 4/2（空闲 3 分钟回收）；`client_traffics.inbound_id` 索引；备份前 checkpoint，导入时清理 WAL sidecar |
 
@@ -215,7 +215,7 @@ docker run -itd \
 | `GET` | `"/getDb"` | 下载数据库备份 |
 | `GET` | `"/createbackup"` | 让 Telegram 机器人向管理员发送备份 |
 | `GET` | `"/getConfigJson"` | 获取 config.json |
-| `GET` | `"/getXrayVersion"` | 获取可用的 Xray 版本（本版本固定返回 v26.6.27） |
+| `GET` | `"/getXrayVersion"` | 获取可切换的 Xray 版本列表（离线时回退为默认版本） |
 | `GET` | `"/getNewVlessEnc"` | 生成新的 VLESS 加密参数 |
 | `GET` | `"/getNewX25519Cert"` | 生成新的 X25519 证书 |
 | `GET` | `"/getNewmldsa65"` | 生成新的 mldsa65 密钥 |
@@ -225,7 +225,7 @@ docker run -itd \
 | `POST` | `"/importDB"` | 导入数据库 |
 | `POST` | `"/stopXrayService"` | 停止 Xray |
 | `POST` | `"/restartXrayService"` | 重启 Xray |
-| `POST` | `"/installXray/:version"` | 安装指定版本 Xray（本版本会强制锁定 v26.6.27） |
+| `POST` | `"/installXray/:version"` | 安装并切换到指定版本 Xray |
 | `POST` | `"/logs/:count"` | 获取面板 / Xray 日志 |
 
 </details>

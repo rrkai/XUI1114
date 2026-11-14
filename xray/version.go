@@ -1,4 +1,5 @@
 package xray
 
-// PinnedVersion is the only Xray-core release this build will install or run.
-const PinnedVersion = "v26.6.27"
+// DefaultVersion ships with the installer and is the fallback when the
+// release list cannot be fetched; other versions can be switched in the panel.
+const DefaultVersion = "v26.6.27"

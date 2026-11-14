@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -83,6 +84,56 @@ type Status struct {
 		Ipv4     string `json:"ipv4"`
 		Ipv6     string `json:"ipv6"`
 	} `json:"hostInfo"`
+}
+
+type Release struct {
+	TagName string `json:"tag_name"`
+}
+
+// minXrayVersion is the oldest release offered in the panel.
+const minXrayVersion = "v26.4.25"
+
+var xrayVersionPattern = regexp.MustCompile(`^v[0-9][0-9A-Za-z.\-]*$`)
+
+func versionAtLeast(version, minimum string) bool {
+	a, okA := parseVersion(version)
+	b, okB := parseVersion(minimum)
+	if !okA || !okB {
+		return false
+	}
+	for i := 0; i < len(a) || i < len(b); i++ {
+		var x, y int
+		if i < len(a) {
+			x = a[i]
+		}
+		if i < len(b) {
+			y = b[i]
+		}
+		if x != y {
+			return x > y
+		}
+	}
+	return true
+}
+
+func parseVersion(version string) ([]int, bool) {
+	if !xrayVersionPattern.MatchString(version) {
+		return nil, false
+	}
+	core := strings.TrimPrefix(version, "v")
+	if i := strings.IndexAny(core, "-+"); i >= 0 {
+		core = core[:i]
+	}
+	parts := strings.Split(core, ".")
+	nums := make([]int, 0, len(parts))
+	for _, part := range parts {
+		n, err := strconv.Atoi(part)
+		if err != nil {
+			return nil, false
+		}
+		nums = append(nums, n)
+	}
+	return nums, true
 }
 
 type ServerService struct {
@@ -221,7 +272,36 @@ func (s *ServerService) GetStatus(lastStatus *Status) *Status {
 }
 
 func (s *ServerService) GetXrayVersions() ([]string, error) {
-	return []string{xray.PinnedVersion}, nil
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get("https://api.github.com/repos/XTLS/Xray-core/releases")
+	if err != nil {
+		logger.Warning("fetch xray versions failed, using default:", err)
+		return []string{xray.DefaultVersion}, nil
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		logger.Warning("fetch xray versions failed, status:", resp.StatusCode)
+		return []string{xray.DefaultVersion}, nil
+	}
+
+	releases := make([]Release, 0)
+	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
+		logger.Warning("parse xray versions failed, using default:", err)
+		return []string{xray.DefaultVersion}, nil
+	}
+
+	versions := make([]string, 0, len(releases))
+	for _, release := range releases {
+		if versionAtLeast(release.TagName, minXrayVersion) {
+			versions = append(versions, release.TagName)
+		}
+	}
+	for _, version := range versions {
+		if version == xray.DefaultVersion {
+			return versions, nil
+		}
+	}
+	return append([]string{xray.DefaultVersion}, versions...), nil
 }
 
 func (s *ServerService) StopXrayService() (string error) {
@@ -247,7 +327,9 @@ func (s *ServerService) RestartXrayService() (string error) {
 }
 
 func (s *ServerService) downloadXRay(version string) (string, error) {
-	version = xray.PinnedVersion
+	if !xrayVersionPattern.MatchString(version) {
+		return "", common.NewError("invalid xray version: " + version)
+	}
 	osName := runtime.GOOS
 	arch := runtime.GOARCH
 
@@ -282,6 +364,9 @@ func (s *ServerService) downloadXRay(version string) (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return "", common.NewErrorf("download xray %s failed: HTTP %d", version, resp.StatusCode)
+	}
 
 	os.Remove(fileName)
 	file, err := os.Create(fileName)
@@ -299,11 +384,20 @@ func (s *ServerService) downloadXRay(version string) (string, error) {
 }
 
 func (s *ServerService) UpdateXray(version string) error {
-	version = xray.PinnedVersion
 	// 1. Stop xray before doing anything
 	if err := s.StopXrayService(); err != nil {
 		logger.Warning("failed to stop xray before update:", err)
 	}
+
+	restarted := false
+	defer func() {
+		if restarted {
+			return
+		}
+		if err := s.xrayService.RestartXray(true); err != nil {
+			logger.Error("failed to restart xray after update error:", err)
+		}
+	}()
 
 	// 2. Download the zip
 	zipFileName, err := s.downloadXRay(version)
@@ -357,12 +451,13 @@ func (s *ServerService) UpdateXray(version string) error {
 	}
 
 	// 5. Restart xray
-	if err := s.xrayService.RestartXray(true); err != nil {
+	err = s.xrayService.RestartXray(true)
+	restarted = true
+	if err != nil {
 		logger.Error("start xray failed:", err)
-		return err
 	}
 
-	return nil
+	return err
 }
 
 func (s *ServerService) GetLogs(count string, level string, syslog string) []string {
