@@ -2,7 +2,7 @@
 
 基于 [alireza0/x-ui](https://github.com/alireza0/x-ui) v1.11.4 的定制分支，遵循 GPLv3。
 
-![Release](https://img.shields.io/github/v/release/rrkai/XUI1114)
+![Release](https://img.shields.io/github/v/release/rrkai/xui-go)
 ![License](https://img.shields.io/badge/license-GPL%20V3-blue.svg)
 
 > **免责声明：** 本项目仅供个人学习与通信使用，请勿用于任何非法用途，不建议直接用于生产环境。
@@ -40,13 +40,13 @@
 ## 安装与升级
 
 ```sh
-bash <(curl -Ls https://raw.githubusercontent.com/rrkai/XUI1114/main/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh)
 ```
 
 安装指定版本（版本号格式如 `v1.11.4-3`；不指定版本时安装 `releases/latest`）：
 
 ```sh
-VERSION=v1.11.4-3 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/XUI1114/main/install.sh) $VERSION
+VERSION=v1.11.4-3 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh) $VERSION
 ```
 
 - 安装脚本从本仓库的 `releases/latest` 下载 `x-ui-linux-<arch>.tar.gz`。
@@ -82,7 +82,7 @@ case "${ARCH}" in
   *) XUI_ARCH="amd64" ;;
 esac
 
-wget https://github.com/rrkai/XUI1114/releases/latest/download/x-ui-linux-${XUI_ARCH}.tar.gz
+wget https://github.com/rrkai/xui-go/releases/latest/download/x-ui-linux-${XUI_ARCH}.tar.gz
 ```
 
 3. 安装或升级：
@@ -108,8 +108,8 @@ systemctl restart x-ui
 仓库自带 `Dockerfile`。注意：`docker-compose.yml` 中的 `image` 仍指向上游镜像，使用前请改为本地构建，或直接使用下面的命令。
 
 ```sh
-git clone https://github.com/rrkai/XUI1114.git
-cd XUI1114
+git clone https://github.com/rrkai/xui-go.git
+cd xui-go
 docker build -t x-ui .
 
 mkdir -p db cert

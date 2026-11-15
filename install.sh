@@ -142,20 +142,20 @@ install_x-ui() {
     cd /usr/local/
 
     if [ $# == 0 ]; then
-        last_version=$(curl -Ls "https://api.github.com/repos/rrkai/XUI1114/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+        last_version=$(curl -Ls "https://api.github.com/repos/rrkai/xui-go/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
         if [[ ! -n "$last_version" ]]; then
             echo -e "${red}获取 x-ui 版本失败，可能是 GitHub API 限制，请稍后重试${plain}"
             exit 1
         fi
         echo -e "获取到 x-ui 最新版本：${last_version}，开始安装……"
-        wget -N --no-check-certificate -O /usr/local/x-ui-linux-$(arch).tar.gz https://github.com/rrkai/XUI1114/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz
+        wget -N --no-check-certificate -O /usr/local/x-ui-linux-$(arch).tar.gz https://github.com/rrkai/xui-go/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz
         if [[ $? -ne 0 ]]; then
             echo -e "${red}下载 x-ui 失败，请确认服务器可以访问 GitHub${plain}"
             exit 1
         fi
     else
         last_version=$1
-        url="https://github.com/rrkai/XUI1114/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz"
+        url="https://github.com/rrkai/xui-go/releases/download/${last_version}/x-ui-linux-$(arch).tar.gz"
         echo -e "开始安装 x-ui $1"
         wget -N --no-check-certificate -O /usr/local/x-ui-linux-$(arch).tar.gz ${url}
         if [[ $? -ne 0 ]]; then
@@ -183,8 +183,8 @@ install_x-ui() {
     chmod +x x-ui bin/xray-linux-$(arch)
     cp -f x-ui.service /etc/systemd/system/
     # raw.githubusercontent.com may be unavailable, fall back to the GitHub API
-    if ! wget --no-check-certificate -q -O /usr/bin/x-ui https://raw.githubusercontent.com/rrkai/XUI1114/main/x-ui.sh || ! head -1 /usr/bin/x-ui | grep -q '^#!/bin/bash'; then
-        curl -fsSL -H "Accept: application/vnd.github.raw" "https://api.github.com/repos/rrkai/XUI1114/contents/x-ui.sh?ref=main" -o /usr/bin/x-ui && head -1 /usr/bin/x-ui | grep -q '^#!/bin/bash' || {
+    if ! wget --no-check-certificate -q -O /usr/bin/x-ui https://raw.githubusercontent.com/rrkai/xui-go/main/x-ui.sh || ! head -1 /usr/bin/x-ui | grep -q '^#!/bin/bash'; then
+        curl -fsSL -H "Accept: application/vnd.github.raw" "https://api.github.com/repos/rrkai/xui-go/contents/x-ui.sh?ref=main" -o /usr/bin/x-ui && head -1 /usr/bin/x-ui | grep -q '^#!/bin/bash' || {
             echo -e "${red}下载 x-ui 管理脚本失败，请检查网络后重试${plain}"
             exit 1
         }

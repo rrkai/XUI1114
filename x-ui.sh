@@ -65,7 +65,7 @@ before_show_menu() {
 }
 
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/rrkai/XUI1114/main/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -84,7 +84,7 @@ update() {
         fi
         return 0
     fi
-    bash <(curl -Ls https://raw.githubusercontent.com/rrkai/XUI1114/main/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh)
     if [[ $? == 0 ]]; then
         LOGI "更新完成，面板已自动重启"
         exit 0
@@ -100,7 +100,7 @@ legacy_version() {
         exit 1
     fi
 
-    download_link="https://raw.githubusercontent.com/rrkai/XUI1114/main/install.sh"
+    download_link="https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh"
 
     # Use the entered panel version in the download link
     install_command="bash <(curl -Ls $download_link) $panel_version"
@@ -133,7 +133,7 @@ uninstall() {
     echo -e "\n卸载成功。"
     echo ""
     echo -e "如需重新安装面板，可执行以下命令："
-    echo -e "${green}bash <(curl -Ls https://raw.githubusercontent.com/rrkai/XUI1114/main/install.sh)${plain}"
+    echo -e "${green}bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh)${plain}"
     echo ""
     # Trap the SIGTERM signal
     trap delete_script SIGTERM
@@ -362,7 +362,7 @@ show_log() {
 }
 
 update_shell() {
-    wget -O /usr/bin/x-ui -N --no-check-certificate https://github.com/rrkai/XUI1114/raw/main/x-ui.sh
+    wget -O /usr/bin/x-ui -N --no-check-certificate https://github.com/rrkai/xui-go/raw/main/x-ui.sh
     if [[ $? != 0 ]]; then
         echo ""
         LOGE "脚本下载失败，请检查服务器能否连接 GitHub"
