@@ -200,18 +200,10 @@
                         <a href="https://github.com/rrkai/xui-go/releases" target="_blank">
                             <a-tag color="purple" style="cursor: pointer;">XUI-GO v{{ .cur_ver }}</a-tag>
                         </a>
+                        <a v-if="updateCheck.hasUpdate" :href="updateCheck.url" target="_blank" class="cb-update-hint">({{ i18n "pages.index.updateAvailable" }})</a>
                         <a-tooltip title='{{ i18n "pages.index.xraySwitch" }}'>
                             <a-tag color="purple" style="cursor: pointer;" @click="openSelectV2rayVersion">Xray [[ status.xray.version ]]</a-tag>
                         </a-tooltip>
-                        <div class="cb-version-check">
-                            <template v-if="updateCheck.hasUpdate">
-                                <a :href="updateCheck.url" target="_blank">{{ i18n "pages.index.newVersion" }} [[ updateCheck.latest ]]</a>
-                            </template>
-                            <template v-else-if="updateCheck.latest">
-                                {{ i18n "pages.index.latestVersion" }} [[ updateCheck.latest ]] · {{ i18n "pages.index.upToDate" }}
-                            </template>
-                            <template v-else-if="updateCheck.failed">{{ i18n "pages.index.checkFailed" }}</template>
-                        </div>
                     </a-card>
                 </a-col>
                 <a-col :xs="24" :sm="12" :md="6">
@@ -596,7 +588,7 @@
             rank: {today: [], yesterday: []},
             expiryItems: [],
             remainingItems: [],
-            updateCheck: {latest: '', url: '', hasUpdate: false, failed: false},
+            updateCheck: {hasUpdate: false, url: ''},
             i18nOnline: '{{ i18n "pages.index.online" }}',
             i18nOffline: '{{ i18n "pages.index.offline" }}',
             i18nError: '{{ i18n "pages.index.error" }}',
@@ -738,18 +730,11 @@
             async checkUpdate() {
                 try {
                     const msg = await HttpUtil.get('/server/checkUpdate');
-                    if (msg.success && msg.obj) {
-                        this.updateCheck = {
-                            latest: msg.obj.latest || '',
-                            url: msg.obj.url || '',
-                            hasUpdate: !!msg.obj.hasUpdate,
-                            failed: false,
-                        };
-                    } else {
-                        this.updateCheck.failed = true;
+                    if (msg.success && msg.obj && msg.obj.hasUpdate) {
+                        this.updateCheck = {hasUpdate: true, url: msg.obj.url || ''};
                     }
                 } catch (e) {
-                    this.updateCheck.failed = true;
+                    // version check is best-effort; stay silent on failure
                 }
             },
             remainingChipClass(item) {

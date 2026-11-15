@@ -429,15 +429,11 @@
     width: 100%;
 }
 
-.cb-version-check {
-    margin-top: 8px;
+.cb-update-hint {
+    margin-left: 4px;
     font-size: 12px;
-    color: var(--cb-text-3);
-}
-
-.cb-version-check a {
-    color: var(--cb-purple);
     font-weight: 600;
+    color: var(--cb-purple);
 }
 
 /* daily traffic ranking */
