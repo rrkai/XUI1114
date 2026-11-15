@@ -709,34 +709,17 @@
                     }
                 });
             },
-            async getTrafficRank() {
+            async getDashboardWidgets() {
                 try {
-                    const msg = await HttpUtil.get('/server/trafficRank');
+                    const msg = await HttpUtil.get('/server/dashboard');
                     if (msg.success && msg.obj) {
+                        const rank = msg.obj.trafficRank || {};
                         this.rank = {
-                            today: msg.obj.today || [],
-                            yesterday: msg.obj.yesterday || [],
+                            today: rank.today || [],
+                            yesterday: rank.yesterday || [],
                         };
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
-            },
-            async getClientExpiry() {
-                try {
-                    const msg = await HttpUtil.get('/server/clientExpiry');
-                    if (msg.success && msg.obj) {
-                        this.expiryItems = msg.obj;
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
-            },
-            async getRemainingTraffic() {
-                try {
-                    const msg = await HttpUtil.get('/server/remainingTraffic');
-                    if (msg.success && msg.obj) {
-                        this.remainingItems = msg.obj;
+                        this.expiryItems = msg.obj.clientExpiry || [];
+                        this.remainingItems = msg.obj.remainingTraffic || [];
                     }
                 } catch (e) {
                     console.error(e);
@@ -973,20 +956,27 @@
             if (window.location.protocol !== "https:") {
                 this.showAlert = true;
             }
-            this.getTrafficRank();
-            this.getClientExpiry();
-            this.getRemainingTraffic();
+            this.getDashboardWidgets();
             let tick = 0;
-            while (true) {
-                try {
-                    await this.getStatus();
-                } catch (e) {
-                    console.error(e);
+            // pause polling while the tab is hidden, refresh right away when it
+            // becomes visible again
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    tick = 0;
+                    this.getStatus();
+                    this.getDashboardWidgets();
                 }
-                if (++tick % 15 === 0) {
-                    this.getTrafficRank();
-                    this.getClientExpiry();
-                    this.getRemainingTraffic();
+            });
+            while (true) {
+                if (!document.hidden) {
+                    try {
+                        await this.getStatus();
+                    } catch (e) {
+                        console.error(e);
+                    }
+                    if (++tick % 15 === 0) {
+                        this.getDashboardWidgets();
+                    }
                 }
                 await PromiseUtil.sleep(2000);
             }

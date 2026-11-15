@@ -765,26 +765,29 @@ func (t *Tgbot) sendBackup(chatId int64) {
 		return
 	}
 
-	// Update by manually trigger a checkpoint operation
-	err := database.Checkpoint()
+	// Export through VACUUM INTO so the uploaded file is a consistent snapshot
+	// and the live file (plus its WAL) is never read directly.
+	snapshotPath, cleanup, err := database.CreateSnapshot()
 	if err != nil {
-		logger.Warning("Error in trigger a checkpoint operation: ", err)
+		logger.Warning("Error in creating database snapshot: ", err)
+	} else {
+		defer cleanup()
 	}
 
 	output := t.I18nBot("tgbot.messages.backupTime", "Time=="+time.Now().Format("2006-01-02 15:04:05"))
 	t.SendMsgToTgbot(chatId, output)
 
-	file := tgbotapi.FilePath(config.GetDBPath())
-	msg := tgbotapi.NewDocument(chatId, file)
-	_, err = currentBot.Send(msg)
-	if err != nil {
-		logger.Warning("Error in uploading backup: ", err)
+	if snapshotPath != "" {
+		file := tgbotapi.FilePath(snapshotPath)
+		msg := tgbotapi.NewDocument(chatId, file)
+		if _, err = currentBot.Send(msg); err != nil {
+			logger.Warning("Error in uploading backup: ", err)
+		}
 	}
 
-	file = tgbotapi.FilePath(xray.GetConfigPath())
-	msg = tgbotapi.NewDocument(chatId, file)
-	_, err = currentBot.Send(msg)
-	if err != nil {
+	file := tgbotapi.FilePath(xray.GetConfigPath())
+	msg := tgbotapi.NewDocument(chatId, file)
+	if _, err = currentBot.Send(msg); err != nil {
 		logger.Warning("Error in uploading config.json: ", err)
 	}
 }

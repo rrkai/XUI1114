@@ -1347,10 +1347,12 @@
             },
             async startDataRefreshLoop() {
                 while (this.isRefreshEnabled) {
+                if (!document.hidden) {
                 try {
                     await this.getDBInbounds();
                 } catch (e) {
                     console.error(e);
+                }
                 }
                 await PromiseUtil.sleep(this.refreshInterval);
                 }
@@ -1406,6 +1408,13 @@
                 this.showAlert = true;
             }
             window.addEventListener('resize', this.onResize);
+            // pause polling while the tab is hidden, refresh right away when it
+            // becomes visible again
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden && this.isRefreshEnabled && !this.refreshing) {
+                    this.getDBInbounds();
+                }
+            });
             this.onResize();
             this.loading();
             this.getDefaultSettings();

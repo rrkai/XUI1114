@@ -123,6 +123,7 @@ func (a *APIController) serverApi(api *gin.RouterGroup) {
 		Handler gin.HandlerFunc
 	}{
 		{"GET", "/status", a.serverController.status},
+		{"GET", "/dashboard", a.serverController.dashboard},
 		{"GET", "/getDb", a.serverController.getDb},
 		{"GET", "/createbackup", a.createBackup},
 		{"GET", "/getConfigJson", a.serverController.getConfigJson},

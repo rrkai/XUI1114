@@ -564,25 +564,15 @@ func (s *ServerService) GetConfigJson() (interface{}, error) {
 }
 
 func (s *ServerService) GetDb() ([]byte, error) {
-	// Update by manually trigger a checkpoint operation
-	err := database.Checkpoint()
+	// Export through VACUUM INTO so the download is a consistent snapshot and
+	// the live file (plus its WAL) is never read directly.
+	snapshotPath, cleanup, err := database.CreateSnapshot()
 	if err != nil {
 		return nil, err
 	}
-	// Open the file for reading
-	file, err := os.Open(config.GetDBPath())
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
+	defer cleanup()
 
-	// Read the file contents
-	fileContents, err := io.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-
-	return fileContents, nil
+	return os.ReadFile(snapshotPath)
 }
 
 func (s *ServerService) ImportDB(file multipart.File) error {
@@ -896,6 +886,34 @@ func (s *ServerService) GetClientExpiry(limit int) ([]ClientExpiryItem, error) {
 		items = items[:limit]
 	}
 	return items, nil
+}
+
+type DashboardWidgets struct {
+	TrafficRank      map[string][]TrafficRankItem `json:"trafficRank"`
+	ClientExpiry     []ClientExpiryItem           `json:"clientExpiry"`
+	RemainingTraffic []RemainingTrafficItem       `json:"remainingTraffic"`
+}
+
+// GetDashboardWidgets returns the dashboard side widgets in one response so the
+// page can poll them with a single request.
+func (s *ServerService) GetDashboardWidgets(limit int) (*DashboardWidgets, error) {
+	rank, err := s.GetTrafficRank(limit)
+	if err != nil {
+		return nil, err
+	}
+	expiry, err := s.GetClientExpiry(limit)
+	if err != nil {
+		return nil, err
+	}
+	remaining, err := s.GetRemainingTraffic(limit)
+	if err != nil {
+		return nil, err
+	}
+	return &DashboardWidgets{
+		TrafficRank:      rank,
+		ClientExpiry:     expiry,
+		RemainingTraffic: remaining,
+	}, nil
 }
 
 type RemainingTrafficItem struct {

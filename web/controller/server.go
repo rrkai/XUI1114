@@ -47,6 +47,7 @@ func (a *ServerController) initRouter(g *gin.RouterGroup) {
 	g.GET("/trafficRank", a.trafficRank)
 	g.GET("/clientExpiry", a.clientExpiry)
 	g.GET("/remainingTraffic", a.remainingTraffic)
+	g.GET("/dashboard", a.dashboard)
 	g.GET("/getDb", a.getDb)
 	g.GET("/getConfigJson", a.getConfigJson)
 	g.GET("/getNewmldsa65", a.getNewmldsa65)
@@ -101,6 +102,11 @@ func (a *ServerController) clientExpiry(c *gin.Context) {
 func (a *ServerController) remainingTraffic(c *gin.Context) {
 	items, err := a.serverService.GetRemainingTraffic(10)
 	jsonObj(c, items, err)
+}
+
+func (a *ServerController) dashboard(c *gin.Context) {
+	widgets, err := a.serverService.GetDashboardWidgets(10)
+	jsonObj(c, widgets, err)
 }
 
 func (a *ServerController) setPanelTitle(c *gin.Context) {

@@ -189,7 +189,24 @@ func InitDB(dbPath string) error {
 		return err
 	}
 
-	return migrations.Run(db)
+	if err = migrations.Run(db); err != nil {
+		return err
+	}
+
+	// Dashboard queries filter clients by expiry and remaining quota.
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_client_traffics_expiry ON client_traffics(enable, expiry_time);").Error; err != nil {
+		xlogger.Warning("sqlite: create client expiry index failed: ", err)
+	}
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_client_traffics_remaining ON client_traffics((total - up - down)) WHERE total > 0;").Error; err != nil {
+		xlogger.Warning("sqlite: create client remaining index failed: ", err)
+	}
+
+	// Fold any WAL left over from a previous run back into the main file.
+	if err := Checkpoint(); err != nil {
+		xlogger.Warning("sqlite: startup wal checkpoint failed: ", err)
+	}
+
+	return nil
 }
 
 func CloseDB() error {
@@ -222,7 +239,41 @@ func IsSQLiteDB(file io.Reader) (bool, error) {
 }
 
 func Checkpoint() error {
-	return db.Exec("PRAGMA wal_checkpoint(TRUNCATE);").Error
+	var busy, log, checkpointed int
+	err := db.Raw("PRAGMA wal_checkpoint(TRUNCATE);").Row().Scan(&busy, &log, &checkpointed)
+	if err != nil {
+		return err
+	}
+	if busy != 0 {
+		return common.NewErrorf("wal checkpoint busy: log=%d checkpointed=%d", log, checkpointed)
+	}
+	return nil
+}
+
+// Snapshot writes a consistent copy of the database through SQLite's
+// VACUUM INTO. Unlike copying the live file it includes data still sitting in
+// the WAL and never produces a torn or lock-breaking copy.
+func Snapshot(destPath string) error {
+	if _, err := os.Stat(destPath); err == nil {
+		return common.NewError("snapshot destination already exists: " + destPath)
+	}
+	return db.Exec("VACUUM INTO ?", destPath).Error
+}
+
+// CreateSnapshot writes a snapshot into a private temporary directory. The
+// returned cleanup function removes it.
+func CreateSnapshot() (string, func(), error) {
+	dir, err := os.MkdirTemp("", "x-ui-snapshot-")
+	if err != nil {
+		return "", nil, err
+	}
+	cleanup := func() { os.RemoveAll(dir) }
+	destPath := path.Join(dir, "x-ui.db")
+	if err := Snapshot(destPath); err != nil {
+		cleanup()
+		return "", nil, err
+	}
+	return destPath, cleanup, nil
 }
 
 func ValidateSQLiteDB(dbPath string) error {

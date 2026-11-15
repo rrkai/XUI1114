@@ -21,6 +21,9 @@ type InboundService struct {
 
 const (
 	safeBatchSize = 500
+	// dailyTrafficBatchSize keeps the multi-row upsert well below SQLite's
+	// bound-parameter limit (4 parameters per row).
+	dailyTrafficBatchSize = 250
 )
 
 func (s *InboundService) GetInbounds(userId int) ([]*model.Inbound, error) {
@@ -915,16 +918,34 @@ func (s *InboundService) addClientTraffic(tx *gorm.DB, traffics []*xray.ClientTr
 	}
 
 	// Keep a per-day bucket alongside the cumulative row so the dashboard
-	// can rank clients without replaying months of counters.
+	// can rank clients without replaying months of counters. Use one multi-row
+	// upsert per chunk: a statement per client becomes thousands of writes
+	// every 10 seconds on large panels.
 	day := time.Now().Format("2006-01-02")
+	dayTraffics := make([]*xray.ClientTraffic, 0, len(traffics))
 	for _, traffic := range traffics {
 		if traffic.Email == "" || (traffic.Up <= 0 && traffic.Down <= 0) {
 			continue
 		}
-		err = tx.Exec(`INSERT INTO client_traffic_dailies (email, day, up, down) VALUES (?, ?, ?, ?)
-			ON CONFLICT(email, day) DO UPDATE SET up = client_traffic_dailies.up + excluded.up,
-			down = client_traffic_dailies.down + excluded.down`,
-			traffic.Email, day, traffic.Up, traffic.Down).Error
+		dayTraffics = append(dayTraffics, traffic)
+	}
+	for i := 0; i < len(dayTraffics); i += dailyTrafficBatchSize {
+		end := i + dailyTrafficBatchSize
+		if end > len(dayTraffics) {
+			end = len(dayTraffics)
+		}
+		var sql strings.Builder
+		sql.WriteString("INSERT INTO client_traffic_dailies (email, day, up, down) VALUES ")
+		args := make([]interface{}, 0, (end-i)*4)
+		for j, traffic := range dayTraffics[i:end] {
+			if j > 0 {
+				sql.WriteString(", ")
+			}
+			sql.WriteString("(?, ?, ?, ?)")
+			args = append(args, traffic.Email, day, traffic.Up, traffic.Down)
+		}
+		sql.WriteString(" ON CONFLICT(email, day) DO UPDATE SET up = client_traffic_dailies.up + excluded.up, down = client_traffic_dailies.down + excluded.down")
+		err = tx.Exec(sql.String(), args...).Error
 		if err != nil {
 			logger.Warning("add client daily traffic failed:", err)
 			return nil
@@ -949,13 +970,14 @@ func (s *InboundService) addClientTraffic(tx *gorm.DB, traffics []*xray.ClientTr
 		return err
 	}
 
-	for dbTraffic_index := range dbClientTraffics {
-		for traffic_index := range traffics {
-			if dbClientTraffics[dbTraffic_index].Email == traffics[traffic_index].Email {
-				dbClientTraffics[dbTraffic_index].Up += traffics[traffic_index].Up
-				dbClientTraffics[dbTraffic_index].Down += traffics[traffic_index].Down
-				break
-			}
+	trafficByEmail := make(map[string]*xray.ClientTraffic, len(traffics))
+	for _, traffic := range traffics {
+		trafficByEmail[traffic.Email] = traffic
+	}
+	for _, dbTraffic := range dbClientTraffics {
+		if traffic, ok := trafficByEmail[dbTraffic.Email]; ok {
+			dbTraffic.Up += traffic.Up
+			dbTraffic.Down += traffic.Down
 		}
 	}
 

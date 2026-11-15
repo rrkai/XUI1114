@@ -150,7 +150,11 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	}
 	// Assets are served pre-compressed by serveAssets, so exclude them from the
 	// on-the-fly gzip middleware to avoid recompressing them on every request.
-	engine.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{basePath + "xui/API/", basePath + "assets/"})))
+	// API responses are compressed above 1 KiB; the raw database download must
+	// stay uncompressed so it is saved as a valid SQLite file.
+	engine.Use(gzip.Gzip(gzip.DefaultCompression,
+		gzip.WithExcludedPaths([]string{basePath + "xui/API/server/getDb", basePath + "assets/"}),
+		gzip.WithMinLength(1024)))
 	assetsBasePath := basePath + "assets/"
 
 	store := cookie.NewStore(secret)
