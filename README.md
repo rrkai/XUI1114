@@ -43,10 +43,10 @@
 bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh)
 ```
 
-安装指定版本（版本号格式如 `v1.11.4-3`；不指定版本时安装 `releases/latest`）：
+安装指定版本（版本号格式如 `v26.08`，即 2026 年第 8 次发布；不指定版本时安装 `releases/latest`）：
 
 ```sh
-VERSION=v1.11.4-3 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh) $VERSION
+VERSION=v26.08 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh) $VERSION
 ```
 
 - 安装脚本从本仓库的 `releases/latest` 下载 `x-ui-linux-<arch>.tar.gz`。

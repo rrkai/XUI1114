@@ -124,6 +124,7 @@ func (a *APIController) serverApi(api *gin.RouterGroup) {
 	}{
 		{"GET", "/status", a.serverController.status},
 		{"GET", "/dashboard", a.serverController.dashboard},
+		{"GET", "/checkUpdate", a.serverController.checkUpdate},
 		{"GET", "/getDb", a.serverController.getDb},
 		{"GET", "/createbackup", a.createBackup},
 		{"GET", "/getConfigJson", a.serverController.getConfigJson},

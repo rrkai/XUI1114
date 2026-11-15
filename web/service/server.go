@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/alireza0/x-ui/config"
@@ -914,6 +915,90 @@ func (s *ServerService) GetDashboardWidgets(limit int) (*DashboardWidgets, error
 		ClientExpiry:     expiry,
 		RemainingTraffic: remaining,
 	}, nil
+}
+
+type UpdateCheckInfo struct {
+	Current   string `json:"current"`
+	Latest    string `json:"latest"`
+	HasUpdate bool   `json:"hasUpdate"`
+	URL       string `json:"url"`
+}
+
+var (
+	updateCheckMu    sync.Mutex
+	updateCheckAt    time.Time
+	updateCheckInfo  *UpdateCheckInfo
+	updateCheckError error
+)
+
+// versionCode maps v26.08 / 26.08 to a comparable number. Legacy 1.11.4-x
+// versions rank below the year-based scheme.
+func versionCode(v string) int {
+	v = strings.TrimPrefix(strings.TrimSpace(v), "v")
+	parts := strings.SplitN(v, ".", 3)
+	if len(parts) < 2 {
+		return 0
+	}
+	major, err1 := strconv.Atoi(parts[0])
+	minor, err2 := strconv.Atoi(parts[1])
+	if err1 != nil || err2 != nil {
+		return 0
+	}
+	return major*100 + minor
+}
+
+func fetchLatestRelease(current string) (*UpdateCheckInfo, error) {
+	client := &http.Client{Timeout: 6 * time.Second}
+	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/repos/rrkai/xui-go/releases/latest", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "xui-go-panel")
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, common.NewErrorf("release check: HTTP %d", resp.StatusCode)
+	}
+	var release struct {
+		TagName string `json:"tag_name"`
+		HTMLURL string `json:"html_url"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return nil, err
+	}
+	latest := strings.TrimSpace(release.TagName)
+	if latest == "" {
+		return nil, common.NewError("release check: empty tag")
+	}
+	info := &UpdateCheckInfo{Current: current, Latest: latest, URL: release.HTMLURL}
+	cur, lat := versionCode(current), versionCode(latest)
+	if cur > 0 && lat > 0 {
+		info.HasUpdate = lat > cur
+	} else {
+		info.HasUpdate = strings.TrimPrefix(latest, "v") != strings.TrimPrefix(current, "v")
+	}
+	return info, nil
+}
+
+// CheckUpdate returns the latest GitHub release. Results are cached for an
+// hour (10 minutes after a failure) so dashboard loads do not hit GitHub.
+func (s *ServerService) CheckUpdate() (*UpdateCheckInfo, error) {
+	updateCheckMu.Lock()
+	defer updateCheckMu.Unlock()
+	ttl := time.Hour
+	if updateCheckError != nil {
+		ttl = 10 * time.Minute
+	}
+	if !updateCheckAt.IsZero() && time.Since(updateCheckAt) < ttl {
+		return updateCheckInfo, updateCheckError
+	}
+	updateCheckAt = time.Now()
+	updateCheckInfo, updateCheckError = fetchLatestRelease(config.GetVersion())
+	return updateCheckInfo, updateCheckError
 }
 
 type RemainingTrafficItem struct {
