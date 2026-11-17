@@ -10,7 +10,7 @@ RUN ./DockerInitFiles.sh "$TARGETARCH"
 
 FROM alpine
 LABEL org.opencontainers.image.authors="alireza7@gmail.com"
-ENV TZ=Asia/Shanghai
+ENV TZ=Asia/Hong_Kong
 WORKDIR /app
 
 RUN apk add --no-cache ca-certificates tzdata libcap nftables

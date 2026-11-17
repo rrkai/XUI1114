@@ -35,7 +35,7 @@ var defaultValueMap = map[string]string{
 	"trafficDiff":        "0",
 	"remarkModel":        "-ieo",
 	"outboundTestUrl":    "https://www.gstatic.com/generate_204",
-	"timeLocation":       "Asia/Shanghai",
+	"timeLocation":       "Asia/Hong_Kong",
 	"tgBotEnable":        "false",
 	"tgBotToken":         "",
 	"tgBotChatId":        "",

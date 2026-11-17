@@ -91,38 +91,20 @@ config_after_install() {
 
             local config_port=$(shuf -i 50000-59999 -n 1)
             fresh_install=1
-            echo -e "${yellow}已自动生成随机端口：${config_port}${plain}"
-
             /usr/local/x-ui/x-ui setting -username "${config_username}" -password "${config_password}" -port "${config_port}" -webBasePath "${config_webBasePath}"
-            echo -e "检测到全新安装，出于安全考虑已生成随机登录信息："
-            echo -e "###############################################"
-            echo -e "${green}用户名：${config_username}${plain}"
-            echo -e "${green}密码：${config_password}${plain}"
-            echo -e "${green}端口：${config_port}${plain}"
-            echo -e "${green}面板根路径：${config_webBasePath}${plain}"
-            echo -e "###############################################"
-            echo -e "${yellow}如果忘记登录信息，可执行 'x-ui settings' 查看${plain}"
+            echo -e "${yellow}检测到全新安装，已生成随机登录信息${plain}"
         else
             local config_webBasePath=$(gen_random_web_base_path)
             echo -e "${yellow}面板根路径缺失或过短，正在重新生成……${plain}"
             /usr/local/x-ui/x-ui setting -webBasePath "${config_webBasePath}"
-            echo -e "${green}新的面板根路径：${config_webBasePath}${plain}"
         fi
     else
         if [[ "$existing_username" == "admin" && "$existing_password" == "admin" ]]; then
             local config_username=$(gen_random_string 10)
             local config_password=$(gen_random_string 10)
 
-            echo -e "${yellow}检测到默认用户名和密码，需要立即更新以保障安全……${plain}"
+            echo -e "${yellow}检测到默认用户名和密码，正在更新以保障安全……${plain}"
             /usr/local/x-ui/x-ui setting -username "${config_username}" -password "${config_password}"
-            echo -e "已生成新的随机登录信息："
-            echo -e "###############################################"
-            echo -e "${green}用户名：${config_username}${plain}"
-            echo -e "${green}密码：${config_password}${plain}"
-            echo -e "###############################################"
-            echo -e "${yellow}如果忘记登录信息，可执行 'x-ui settings' 查看${plain}"
-        else
-            echo -e "${green}用户名、密码和面板根路径均已设置好，跳过。${plain}"
         fi
     fi
 
@@ -218,6 +200,20 @@ install_x-ui() {
     systemctl enable x-ui
     systemctl start x-ui
     echo -e "${green}x-ui ${last_version}${plain} 安装完成，服务正在运行……"
+    echo -e ""
+    panel_settings=$(/usr/local/x-ui/x-ui setting -show true 2>/dev/null || true)
+    panel_username=$(printf '%s\n' "$panel_settings" | sed -n 's/^username: //p' | head -1)
+    panel_password=$(printf '%s\n' "$panel_settings" | sed -n 's/^password: //p' | head -1)
+    panel_port=$(printf '%s\n' "$panel_settings" | sed -n 's/^port: //p' | head -1)
+    panel_webBasePath=$(printf '%s\n' "$panel_settings" | sed -n 's/^webBasePath: //p' | head -1)
+    echo -e "${green}面板登录信息${plain}"
+    echo "------------------------------------------"
+    echo -e "用户名：${green}${panel_username}${plain}"
+    echo -e "密码：${green}${panel_password}${plain}"
+    echo -e "端口：${green}${panel_port}${plain}"
+    echo -e "面板根路径：${green}${panel_webBasePath}${plain}"
+    echo "------------------------------------------"
+    echo -e "${yellow}如果忘记登录信息，可执行 'x-ui settings' 查看${plain}"
     echo -e ""
     echo -e "可通过以下地址访问面板：${yellow}"
     /usr/local/x-ui/x-ui uri

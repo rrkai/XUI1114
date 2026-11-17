@@ -12,7 +12,7 @@
 | 项目 | 说明 |
 | --- | --- |
 | 界面语言 | 仅保留中文 / English，默认强制中文；不再根据浏览器 `Accept-Language` 自动切换，只认语言 cookie |
-| 默认时区 | `Asia/Shanghai`（新建数据库生效；导入旧库后可在设置页修改） |
+| 默认时区 | `Asia/Hong_Kong`（新建数据库生效；导入旧库后可在设置页修改） |
 | 管理脚本 | `x-ui.sh` 全菜单汉化，安装 / 更新 / 重装地址全部指向本仓库 |
 | Xray 版本 | 默认安装 `v26.6.27`；可在面板首页的版本弹窗中切换其他版本（列表最低 `v26.4.25`，离线时回退为默认版本） |
 | 出站列表 | 与入站一致的分页 + 全字段搜索（tag、协议、地址、端口、settings/streamSettings 内容） |
@@ -43,10 +43,10 @@
 bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh)
 ```
 
-安装指定版本（版本号格式如 `v26.10`，即 2026 年第 10 次发布；不指定版本时安装 `releases/latest`）：
+安装指定版本（版本号格式如 `v26.11`，即 2026 年第 11 次发布；不指定版本时安装 `releases/latest`）：
 
 ```sh
-VERSION=v26.10 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh) $VERSION
+VERSION=v26.11 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh) $VERSION
 ```
 
 - 安装脚本从本仓库的 `releases/latest` 下载 `x-ui-linux-<arch>.tar.gz`。
@@ -379,7 +379,7 @@ certbot certonly --standalone --register-unsafely-without-email --non-interactiv
 
 ### 导入原版数据库后时区变成 Asia/Tehran
 
-时区保存在 settings 表中，会随导入的库恢复。到“设置”页改为 `Asia/Shanghai` 即可；SQLite 调优参数不受影响。
+时区保存在 settings 表中，会随导入的库恢复。到“设置”页改为 `Asia/Hong_Kong` 即可；SQLite 调优参数不受影响。
 
 </details>
 

@@ -13,6 +13,29 @@
         /* The later #app.vb-login rule sets display:flex, which outranks a bare
            [v-cloak] selector and would expose the raw template while Vue loads. */
         #app[v-cloak] { display: none !important; }
+        #boot-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #040d12;
+            transition: opacity .25s ease;
+        }
+        #boot-loader::after {
+            content: "";
+            width: 30px;
+            height: 30px;
+            border: 2px solid rgba(255, 255, 255, .16);
+            border-top-color: #5f5af7;
+            border-radius: 50%;
+            animation: vb-spin .8s linear infinite;
+        }
+        #app:not([v-cloak]) ~ #boot-loader {
+            opacity: 0;
+            pointer-events: none;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
                          'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji',
@@ -787,6 +810,7 @@
         </div>
     </main>
 </div>
+<div id="boot-loader" aria-hidden="true"></div>
 <script src="{{ .base_path }}assets/vue/vue.min.js?{{ .cur_ver }}"></script>
 <script>
     const basePath = '{{ .base_path }}';

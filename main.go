@@ -334,22 +334,28 @@ func getPanelURI() {
 		return
 	}
 
-	fmt.Println("Local address:")
+	fmt.Println("本地网址：")
 
-	// get ip address
+	// List IPv4 first so dual-stack hosts get a directly usable URL.
+	var ipv4Addrs, ipv6Addrs []string
 	netInterfaces, _ := net.Interfaces()
 	for i := 0; i < len(netInterfaces); i++ {
 		if len(netInterfaces[i].Flags) > 2 && netInterfaces[i].Flags[0] == "up" && netInterfaces[i].Flags[1] != "loopback" {
-			addrs := netInterfaces[i].Addrs
-			for _, address := range addrs {
+			for _, address := range netInterfaces[i].Addrs {
 				IP := strings.Split(address.Addr, "/")[0]
 				if strings.Contains(address.Addr, ".") {
-					fmt.Println(Proto + IP + PortText + BasePath)
-				} else if address.Addr[0:6] != "fe80::" {
-					fmt.Println(Proto + "[" + IP + "]" + PortText + BasePath)
+					ipv4Addrs = append(ipv4Addrs, IP)
+				} else if !strings.HasPrefix(address.Addr, "fe80::") {
+					ipv6Addrs = append(ipv6Addrs, IP)
 				}
 			}
 		}
+	}
+	for _, ip := range ipv4Addrs {
+		fmt.Println(Proto + ip + PortText + BasePath)
+	}
+	for _, ip := range ipv6Addrs {
+		fmt.Println(Proto + "[" + ip + "]" + PortText + BasePath)
 	}
 
 	resp, err := http.Get("https://api.ipify.org?format=text")
@@ -357,7 +363,7 @@ func getPanelURI() {
 		defer resp.Body.Close()
 		ip, err := io.ReadAll(resp.Body)
 		if err == nil {
-			fmt.Printf("\nGlobal address:\n%s%s%s%s\n", Proto, ip, PortText, BasePath)
+			fmt.Printf("\n通用网址：\n%s%s%s%s\n", Proto, strings.TrimSpace(string(ip)), PortText, BasePath)
 		}
 	}
 }

@@ -7,13 +7,45 @@
     <link rel="icon" type="image/x-icon" href="{{ .base_path }}assets/img/favicon.ico?{{ .cur_ver }}">
     <link rel="preload" as="script" href="{{ .base_path }}assets/vue/vue.min.js?{{ .cur_ver }}">
     <link rel="preload" as="script" href="{{ .base_path }}assets/ant-design-vue@1.7.8/antd.min.js">
-    <link rel="stylesheet" href="{{ .base_path }}assets/ant-design-vue@1.7.8/antd.min.css">
-    <link rel="stylesheet" href="{{ .base_path }}assets/element-ui@2.15.0/theme-chalk/display.css">
-    <link rel="stylesheet" href="{{ .base_path }}assets/css/custom.css?{{ .cur_ver }}">
-    <link rel="stylesheet" href="{{ .base_path }}assets/css/carbon.css?{{ .cur_ver }}">
+    <link rel="preload" as="style" href="{{ .base_path }}assets/ant-design-vue@1.7.8/antd.min.css" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="{{ .base_path }}assets/element-ui@2.15.0/theme-chalk/display.css" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="{{ .base_path }}assets/css/custom.css?{{ .cur_ver }}" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="{{ .base_path }}assets/css/carbon.css?{{ .cur_ver }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="{{ .base_path }}assets/ant-design-vue@1.7.8/antd.min.css">
+        <link rel="stylesheet" href="{{ .base_path }}assets/element-ui@2.15.0/theme-chalk/display.css">
+        <link rel="stylesheet" href="{{ .base_path }}assets/css/custom.css?{{ .cur_ver }}">
+        <link rel="stylesheet" href="{{ .base_path }}assets/css/carbon.css?{{ .cur_ver }}">
+    </noscript>
     <style>
-        [v-cloak] {
-            display: none;
+        #app[v-cloak] {
+            display: none !important;
+        }
+        #boot-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #040d12;
+            transition: opacity .25s ease;
+        }
+        #boot-loader::after {
+            content: "";
+            width: 30px;
+            height: 30px;
+            border: 2px solid rgba(255, 255, 255, .16);
+            border-top-color: #5f5af7;
+            border-radius: 50%;
+            animation: boot-spin .8s linear infinite;
+        }
+        @keyframes boot-spin {
+            to { transform: rotate(360deg); }
+        }
+        body:has(#app:not([v-cloak])) #boot-loader {
+            opacity: 0;
+            pointer-events: none;
         }
         /* vazirmatn-regular - arabic_latin_latin-ext */
         @font-face {
@@ -32,5 +64,26 @@
     </style>
     <title>{{ .host }}-{{ i18n .title}}</title>
 </head>
+<div id="boot-loader" aria-hidden="true"></div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var loader = document.getElementById('boot-loader');
+        var app = document.getElementById('app');
+        if (!loader || !app) return;
+        var hide = function () {
+            loader.style.opacity = '0';
+            loader.style.pointerEvents = 'none';
+            setTimeout(function () { if (loader.parentNode) loader.parentNode.removeChild(loader); }, 300);
+        };
+        if (!app.hasAttribute('v-cloak')) { hide(); return; }
+        var observer = new MutationObserver(function () {
+            if (!app.hasAttribute('v-cloak')) {
+                observer.disconnect();
+                hide();
+            }
+        });
+        observer.observe(app, { attributes: true, attributeFilter: ['v-cloak'] });
+    });
+</script>
 <div id="message"></div>
 {{end}}
