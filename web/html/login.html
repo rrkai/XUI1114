@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-{{template "head" .}}
+{{template "login_head" .}}
 <style>
     html,
     body {
@@ -537,6 +537,17 @@
         animation: vb-spin .7s linear infinite;
     }
 
+    .vb-error {
+        margin: -4px 0 12px;
+        color: #dc2626;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    #app.vb-login.dark .vb-error {
+        color: #fca5a5;
+    }
+
     @media (min-width: 420px) {
         .vb-main {
             padding: 24px;
@@ -740,6 +751,8 @@
                         </div>
                     </div>
 
+                    <div class="vb-error" v-if="error" role="alert">[[ error ]]</div>
+
                     <button class="vb-submit" type="submit" :disabled="loading">
                         <span v-if="!loading">{{ i18n "login" }}</span>
                         <span v-else class="vb-spinner"></span>
@@ -749,8 +762,7 @@
         </div>
     </main>
 </div>
-{{template "js" .}}
-{{template "component/themeSwitcher" .}}
+{{template "login_js" .}}
 <script>
     class User {
         constructor() {
@@ -767,7 +779,8 @@
             loading: false,
             showPassword: false,
             user: new User(),
-            lang: ""
+            lang: "",
+            error: ""
         },
         created() {
             this.lang = getLang();
@@ -782,12 +795,31 @@
                 if (this.loading) {
                     return;
                 }
+                this.error = '';
                 this.loading = true;
-                const msg = await HttpUtil.post('/login', this.user);
-                this.loading = false;
-                if (msg.success) {
-                    location.href = basePath + 'xui/';
+                try {
+                    const body = new URLSearchParams();
+                    body.set('username', this.user.username);
+                    body.set('password', this.user.password);
+                    const resp = await fetch(basePath + 'login', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body,
+                    });
+                    const msg = await resp.json();
+                    if (msg && msg.success) {
+                        location.href = basePath + 'xui/';
+                        return;
+                    }
+                    this.error = (msg && msg.msg) || '登录失败';
+                } catch (e) {
+                    this.error = e.toString();
                 }
+                this.loading = false;
             }
         },
     });

@@ -1,0 +1,21 @@
+{{define "login_head"}}
+<head>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preload" as="script" href="{{ .base_path }}assets/vue/vue.min.js?{{ .cur_ver }}">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; min-height: 100%; }
+        [v-cloak] { display: none; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+                         'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji',
+                         'Segoe UI Emoji', 'Segoe UI Symbol';
+        }
+    </style>
+    <title>{{ .host }}-{{ i18n .title}}</title>
+</head>
+<div id="message"></div>
+{{end}}

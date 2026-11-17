@@ -9,8 +9,7 @@
 </template>
 {{end}}
 
-{{define "component/themeSwitcher"}}
-<script>
+{{define "component/themeSwitcherCore"}}
   function createThemeSwitcher() {
     const isDarkTheme = localStorage.getItem('dark-mode') === 'true';
     const theme = isDarkTheme ? 'dark' : 'light';
@@ -28,7 +27,11 @@
   }
 
   const themeSwitcher = createThemeSwitcher();
+{{end}}
 
+{{define "component/themeSwitcher"}}
+<script>
+  {{template "component/themeSwitcherCore" .}}
   Vue.component('theme-switch', {
     props: [],
     template: `{{template "component/themeSwitchTemplate"}}`,

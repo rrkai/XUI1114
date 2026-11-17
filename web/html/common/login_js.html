@@ -1,0 +1,32 @@
+{{define "login_js"}}
+<script src="{{ .base_path }}assets/vue/vue.min.js?{{ .cur_ver }}"></script>
+<script>
+    const basePath = '{{ .base_path }}';
+    const DEFAULT_LANG = 'zh-Hans';
+
+    function isSupportLang(lang) {
+        return lang === 'zh-Hans' || lang === 'en-US';
+    }
+
+    function getLang() {
+        const match = document.cookie.match(/(?:^|;\s*)lang=([^;]+)/);
+        let lang = match ? decodeURIComponent(match[1]) : '';
+        if (!isSupportLang(lang)) {
+            lang = DEFAULT_LANG;
+            document.cookie = 'lang=' + lang + ';path=' + basePath;
+        }
+        return lang;
+    }
+
+    function setLang(lang) {
+        if (!isSupportLang(lang)) {
+            lang = DEFAULT_LANG;
+        }
+        document.cookie = 'lang=' + lang + ';path=' + basePath;
+        window.location.reload();
+    }
+
+    {{template "component/themeSwitcherCore" .}}
+    document.getElementById('message').className = themeSwitcher.currentTheme;
+</script>
+{{end}}
