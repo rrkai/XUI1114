@@ -407,6 +407,16 @@ func main() {
 	settingCmd.StringVar(&tgbotchatid, "tgbotchatid", "", "Set telegram bot chat id")
 	settingCmd.BoolVar(&enabletgbot, "enabletgbot", false, "Enable telegram bot notify")
 
+	autoCertCmd := flag.NewFlagSet("autocert", flag.ExitOnError)
+	var autoCertTarget, autoCertProvider, autoCertEabKid, autoCertEabHmac, autoCertEmail string
+	var autoCertReleasePort80 bool
+	autoCertCmd.StringVar(&autoCertTarget, "target", "", "IP address or domain to request a certificate for (empty = detect public IPv4)")
+	autoCertCmd.StringVar(&autoCertProvider, "provider", "letsencrypt", "ACME provider: letsencrypt or zerossl")
+	autoCertCmd.StringVar(&autoCertEabKid, "eab-kid", "", "ZeroSSL EAB Key ID")
+	autoCertCmd.StringVar(&autoCertEabHmac, "eab-hmac-key", "", "ZeroSSL EAB HMAC Key")
+	autoCertCmd.StringVar(&autoCertEmail, "email", "", "ACME account email (optional)")
+	autoCertCmd.BoolVar(&autoCertReleasePort80, "release-port80", false, "Temporarily stop the systemd service on port 80 during issuance and restart it afterwards")
+
 	oldUsage := flag.Usage
 	flag.Usage = func() {
 		oldUsage()
@@ -467,6 +477,34 @@ func main() {
 		} else {
 			updateCert(webCertFile, webKeyFile)
 		}
+	case "autocert":
+		err := autoCertCmd.Parse(os.Args[2:])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		if err := database.InitDB(config.GetDBPath()); err != nil {
+			fmt.Println("Database initialization failed:", err)
+			os.Exit(1)
+		}
+		settingService := service.SettingService{}
+		if certFile, _ := settingService.GetCertFile(); strings.TrimSpace(certFile) != "" {
+			fmt.Println("Panel certificate already configured, skipping automatic request")
+			return
+		}
+		autoCertService := &service.AutoCertService{}
+		if autoCertReleasePort80 {
+			if err := autoCertService.ApproveReleasePort80(); err != nil {
+				fmt.Println("Failed to approve port 80 release:", err)
+				os.Exit(1)
+			}
+		}
+		err = autoCertService.Issue(autoCertTarget, autoCertProvider, autoCertEabKid, autoCertEabHmac, autoCertEmail)
+		if err != nil {
+			fmt.Println("Automatic certificate request failed:", err)
+			os.Exit(1)
+		}
+		fmt.Println("Automatic certificate request succeeded")
 
 	default:
 		fmt.Println("Invalid subcommands")

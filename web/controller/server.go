@@ -49,6 +49,10 @@ func (a *ServerController) initRouter(g *gin.RouterGroup) {
 	g.GET("/remainingTraffic", a.remainingTraffic)
 	g.GET("/dashboard", a.dashboard)
 	g.GET("/checkUpdate", a.checkUpdate)
+	g.GET("/certStatus", a.certStatus)
+	g.GET("/certPortCheck", a.certPortCheck)
+	g.POST("/certIssue", a.certIssue)
+	g.POST("/certOptions", a.certOptions)
 	g.GET("/getDb", a.getDb)
 	g.GET("/getConfigJson", a.getConfigJson)
 	g.GET("/getNewmldsa65", a.getNewmldsa65)
@@ -66,6 +70,47 @@ func (a *ServerController) initRouter(g *gin.RouterGroup) {
 	g.POST("/logs/:count", a.getLogs)
 	g.POST("/importDB", a.importDB)
 	g.POST("/panelTitle", a.setPanelTitle)
+}
+
+func (a *ServerController) certStatus(c *gin.Context) {
+	status, err := (&service.AutoCertService{}).Status()
+	jsonObj(c, status, err)
+}
+
+func (a *ServerController) certPortCheck(c *gin.Context) {
+	target := c.Query("target")
+	force := c.Query("force") == "1"
+	status := (&service.AutoCertService{}).CheckPort80(target, force)
+	jsonObj(c, status, nil)
+}
+
+func (a *ServerController) certOptions(c *gin.Context) {
+	var form struct {
+		ReleasePort80 bool   `json:"releasePort80" form:"releasePort80"`
+		Unit          string `json:"unit" form:"unit"`
+	}
+	if err := c.ShouldBind(&form); err != nil {
+		jsonObj(c, nil, err)
+		return
+	}
+	err := (&service.AutoCertService{}).SetReleasePort80(form.ReleasePort80, form.Unit)
+	jsonObj(c, nil, err)
+}
+
+func (a *ServerController) certIssue(c *gin.Context) {
+	var form struct {
+		Target   string `json:"target" form:"target"`
+		Provider string `json:"provider" form:"provider"`
+		EabKid   string `json:"eabKid" form:"eabKid"`
+		EabHmac  string `json:"eabHmac" form:"eabHmac"`
+		Email    string `json:"email" form:"email"`
+	}
+	if err := c.ShouldBind(&form); err != nil {
+		jsonObj(c, nil, err)
+		return
+	}
+	err := (&service.AutoCertService{}).Issue(form.Target, form.Provider, form.EabKid, form.EabHmac, form.Email)
+	jsonObj(c, nil, err)
 }
 
 func (a *ServerController) refreshStatus() {

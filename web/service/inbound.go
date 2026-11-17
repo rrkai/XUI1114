@@ -104,14 +104,26 @@ func (s *InboundService) getAllEmails() ([]string, error) {
 	return emails, nil
 }
 
-func (s *InboundService) contains(slice []string, str string) bool {
-	lowerStr := strings.ToLower(str)
-	for _, s := range slice {
-		if strings.ToLower(s) == lowerStr {
-			return true
-		}
+func (s *InboundService) findDuplicateEmail(clients []model.Client, allEmails []string) string {
+	existing := make(map[string]struct{}, len(allEmails))
+	for _, email := range allEmails {
+		existing[strings.ToLower(email)] = struct{}{}
 	}
-	return false
+	seen := make(map[string]struct{}, len(clients))
+	for _, client := range clients {
+		if client.Email == "" {
+			continue
+		}
+		key := strings.ToLower(client.Email)
+		if _, ok := seen[key]; ok {
+			return client.Email
+		}
+		if _, ok := existing[key]; ok {
+			return client.Email
+		}
+		seen[key] = struct{}{}
+	}
+	return ""
 }
 
 func (s *InboundService) checkEmailsExistForClients(clients []model.Client) (string, error) {
@@ -119,19 +131,7 @@ func (s *InboundService) checkEmailsExistForClients(clients []model.Client) (str
 	if err != nil {
 		return "", err
 	}
-	var emails []string
-	for _, client := range clients {
-		if client.Email != "" {
-			if s.contains(emails, client.Email) {
-				return client.Email, nil
-			}
-			if s.contains(allEmails, client.Email) {
-				return client.Email, nil
-			}
-			emails = append(emails, client.Email)
-		}
-	}
-	return "", nil
+	return s.findDuplicateEmail(clients, allEmails), nil
 }
 
 func (s *InboundService) checkEmailExistForInbound(inbound *model.Inbound) (string, error) {
@@ -143,19 +143,7 @@ func (s *InboundService) checkEmailExistForInbound(inbound *model.Inbound) (stri
 	if err != nil {
 		return "", err
 	}
-	var emails []string
-	for _, client := range clients {
-		if client.Email != "" {
-			if s.contains(emails, client.Email) {
-				return client.Email, nil
-			}
-			if s.contains(allEmails, client.Email) {
-				return client.Email, nil
-			}
-			emails = append(emails, client.Email)
-		}
-	}
-	return "", nil
+	return s.findDuplicateEmail(clients, allEmails), nil
 }
 
 func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, bool, error) {
@@ -207,13 +195,6 @@ func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, boo
 
 	db := database.GetDB()
 	tx := db.Begin()
-	defer func() {
-		if err == nil {
-			tx.Commit()
-		} else {
-			tx.Rollback()
-		}
-	}()
 
 	err = tx.Save(inbound).Error
 	if err == nil {
@@ -223,6 +204,10 @@ func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, boo
 			}
 		}
 	} else {
+		tx.Rollback()
+		return inbound, false, err
+	}
+	if err = tx.Commit().Error; err != nil {
 		return inbound, false, err
 	}
 
@@ -245,7 +230,7 @@ func (s *InboundService) AddInbound(inbound *model.Inbound) (*model.Inbound, boo
 	}
 
 	s.syncIpLimitStore(ipLimitUpdatesFromClients(inbound, clients), nil)
-	return inbound, needRestart, err
+	return inbound, needRestart, nil
 }
 
 func (s *InboundService) DelInbound(id int) (bool, error) {
@@ -330,16 +315,9 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) (*model.Inbound, 
 	db := database.GetDB()
 	tx := db.Begin()
 
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
-		}
-	}()
-
 	err = s.updateClientTraffics(tx, oldInbound, inbound)
 	if err != nil {
+		tx.Rollback()
 		return inbound, false, err
 	}
 
@@ -359,6 +337,13 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) (*model.Inbound, 
 		oldInbound.Tag = fmt.Sprintf("inbound-%v", inbound.Port)
 	} else {
 		oldInbound.Tag = fmt.Sprintf("inbound-%v:%v", inbound.Listen, inbound.Port)
+	}
+	if err = tx.Save(oldInbound).Error; err != nil {
+		tx.Rollback()
+		return inbound, false, err
+	}
+	if err = tx.Commit().Error; err != nil {
+		return inbound, false, err
 	}
 
 	needRestart := false
@@ -393,7 +378,7 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) (*model.Inbound, 
 		ipLimitUpdatesFromClients(&syncInbound, newClients),
 		ipLimitRemovedEmails(oldClients, newClients),
 	)
-	return inbound, needRestart, tx.Save(oldInbound).Error
+	return inbound, needRestart, nil
 }
 
 func (s *InboundService) updateClientTraffics(tx *gorm.DB, oldInbound *model.Inbound, newInbound *model.Inbound) error {
@@ -513,19 +498,23 @@ func (s *InboundService) AddInboundClient(data *model.Inbound) (bool, error) {
 	db := database.GetDB()
 	tx := db.Begin()
 
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
+	for _, client := range clients {
+		if len(client.Email) > 0 {
+			s.AddClientStat(tx, data.Id, &client)
 		}
-	}()
+	}
+	if err = tx.Save(oldInbound).Error; err != nil {
+		tx.Rollback()
+		return false, err
+	}
+	if err = tx.Commit().Error; err != nil {
+		return false, err
+	}
 
 	needRestart := false
 	s.xrayApi.Init(p.GetAPIAddr())
 	for _, client := range clients {
 		if len(client.Email) > 0 {
-			s.AddClientStat(tx, data.Id, &client)
 			if client.Enable {
 				cipher := ""
 				if oldInbound.Protocol == "shadowsocks" {
@@ -552,11 +541,8 @@ func (s *InboundService) AddInboundClient(data *model.Inbound) (bool, error) {
 	}
 	s.xrayApi.Close()
 
-	err = tx.Save(oldInbound).Error
-	if err == nil {
-		s.syncIpLimitStore(ipLimitUpdatesFromClients(oldInbound, clients), nil)
-	}
-	return needRestart, err
+	s.syncIpLimitStore(ipLimitUpdatesFromClients(oldInbound, clients), nil)
+	return needRestart, nil
 }
 
 func (s *InboundService) DelInboundClient(inboundId int, clientId string) (bool, error) {
@@ -735,18 +721,11 @@ func (s *InboundService) UpdateInboundClient(data *model.Inbound, clientId strin
 	db := database.GetDB()
 	tx := db.Begin()
 
-	defer func() {
-		if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
-		}
-	}()
-
 	if len(clients[0].Email) > 0 {
 		if len(oldEmail) > 0 {
 			err = s.UpdateClientStat(tx, oldEmail, &clients[0])
 			if err != nil {
+				tx.Rollback()
 				return false, err
 			}
 		} else {
@@ -755,9 +734,18 @@ func (s *InboundService) UpdateInboundClient(data *model.Inbound, clientId strin
 	} else {
 		err = s.DelClientStat(tx, oldEmail)
 		if err != nil {
+			tx.Rollback()
 			return false, err
 		}
 	}
+	if err = tx.Save(oldInbound).Error; err != nil {
+		tx.Rollback()
+		return false, err
+	}
+	if err = tx.Commit().Error; err != nil {
+		return false, err
+	}
+
 	needRestart := false
 	if len(oldEmail) > 0 {
 		s.xrayApi.Init(p.GetAPIAddr())
@@ -804,17 +792,15 @@ func (s *InboundService) UpdateInboundClient(data *model.Inbound, clientId strin
 		logger.Debug("Client old email not found")
 		needRestart = true
 	}
-	err = tx.Save(oldInbound).Error
-	if err == nil {
-		removeEmails := []string{}
-		if oldEmail != "" && oldEmail != clients[0].Email {
-			removeEmails = append(removeEmails, oldEmail)
-		}
-		update := ipLimitUpdatesFromClients(oldInbound, []model.Client{clients[0]})
-		update[0].ResetIPs = true
-		s.syncIpLimitStore(update, removeEmails)
+
+	removeEmails := []string{}
+	if oldEmail != "" && oldEmail != clients[0].Email {
+		removeEmails = append(removeEmails, oldEmail)
 	}
-	return needRestart, err
+	update := ipLimitUpdatesFromClients(oldInbound, []model.Client{clients[0]})
+	update[0].ResetIPs = true
+	s.syncIpLimitStore(update, removeEmails)
+	return needRestart, nil
 }
 
 func (s *InboundService) AddTraffic(inboundTraffics []*xray.Traffic, clientTraffics []*xray.ClientTraffic) (error, bool) {

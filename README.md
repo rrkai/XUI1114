@@ -43,10 +43,10 @@
 bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh)
 ```
 
-安装指定版本（版本号格式如 `v26.09`，即 2026 年第 9 次发布；不指定版本时安装 `releases/latest`）：
+安装指定版本（版本号格式如 `v26.10`，即 2026 年第 10 次发布；不指定版本时安装 `releases/latest`）：
 
 ```sh
-VERSION=v26.09 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh) $VERSION
+VERSION=v26.10 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh) $VERSION
 ```
 
 - 安装脚本从本仓库的 `releases/latest` 下载 `x-ui-linux-<arch>.tar.gz`。
@@ -142,7 +142,9 @@ docker run -itd \
 - 展示已耗尽（过期或超流量）的客户端
 - 订阅服务（多链接）
 - 数据库导入 / 导出
-- 一键申请 SSL 证书并自动续期
+- 全新安装自动申请面板 IP 证书（Let's Encrypt，约 6 天有效，自动续期）
+- 面板安全：证书状态、公网 80 端口检测、Let's Encrypt / ZeroSSL 切换、临时释放 80 端口
+- 同端口 HTTP/HTTPS 自适应：证书有效时 HTTP 自动跳转 HTTPS，证书缺失或过期时保留 HTTP 入口
 - 面板与订阅服务的 HTTPS 访问（自有域名 + 证书）
 - 深色 / 浅色主题
 
@@ -212,6 +214,10 @@ docker run -itd \
 | 方法 | 路径 | 说明 |
 | :---: | --- | --- |
 | `GET` | `"/status"` | 获取服务器状态 |
+| `GET` | `"/certStatus"` | 获取面板证书状态 |
+| `GET` | `"/certPortCheck"` | 检测公网 80 端口可用性（`?target=...&force=1`） |
+| `POST` | `"/certIssue"` | 申请或更新面板证书 |
+| `POST` | `"/certOptions"` | 设置临时释放 80 端口选项 |
 | `GET` | `"/getDb"` | 下载数据库备份 |
 | `GET` | `"/createbackup"` | 让 Telegram 机器人向管理员发送备份 |
 | `GET` | `"/getConfigJson"` | 获取 config.json |
@@ -272,6 +278,16 @@ INFO - sqlite: cache_size= -16000  source= auto  memory_limit_mb= 3921
 
 <details>
   <summary>展开查看</summary>
+
+### 自动证书（面板安全）
+
+全新安装会自动尝试申请面板 IP 证书（Let's Encrypt，约 6 天有效）。之后可在 **面板设置 → 面板安全** 中查看状态、检测或临时释放 80 端口、申请与更换证书。
+
+- 仅支持 HTTP-01，公网必须能访问 80 端口；NAT 机型需先做端口映射，否则会提示不可申请。
+- 到期前 12 小时开始续期，失败每 30 分钟重试；证书过期后域名会自动切换供应商，连续失败 3 次则放弃并回退 HTTP。
+- IP 证书仅 Let's Encrypt 支持；域名可使用 Let's Encrypt 或 ZeroSSL（需 EAB 凭据）。
+- 续期成功后证书在 10 秒内热加载，不重启面板和 Xray。
+- 自动管理的证书保存在 `/root/xui-https/`。
 
 ### Cloudflare（推荐）
 

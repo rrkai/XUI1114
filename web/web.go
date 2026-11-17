@@ -2,7 +2,6 @@ package web
 
 import (
 	"context"
-	"crypto/tls"
 	"embed"
 	"html/template"
 	"io"
@@ -45,8 +44,9 @@ var i18nFS embed.FS
 var startTime = time.Now()
 
 type Server struct {
-	httpServer *http.Server
-	listener   net.Listener
+	httpServer  *http.Server
+	listener    net.Listener
+	certManager *network.CertManager
 
 	index  *controller.IndexController
 	server *controller.ServerController
@@ -296,6 +296,10 @@ func (s *Server) Start() (err error) {
 		}
 	}()
 
+	// If the panel crashed while port 80 was temporarily freed for a
+	// certificate request, bring the stopped service back up.
+	go service.RecoverPort80Release()
+
 	loc, err := s.settingService.GetTimeLocation()
 	if err != nil {
 		return err
@@ -324,14 +328,6 @@ func (s *Server) Start() (err error) {
 		return err
 	}
 
-	certFile, err := s.settingService.GetCertFile()
-	if err != nil {
-		return err
-	}
-	keyFile, err := s.settingService.GetKeyFile()
-	if err != nil {
-		return err
-	}
 	listen, err := s.settingService.GetListen()
 	if err != nil {
 		return err
@@ -340,39 +336,40 @@ func (s *Server) Start() (err error) {
 	if err != nil {
 		return err
 	}
+	webDomain, err := s.settingService.GetWebDomain()
+	if err != nil {
+		return err
+	}
 	listenAddr := net.JoinHostPort(listen, strconv.Itoa(port))
 	listener, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		return err
 	}
-	if certFile != "" || keyFile != "" {
-		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-		if err == nil {
-			webDomain, err := s.settingService.GetWebDomain()
-			if err != nil {
-				return err
-			}
-			c := network.NewTLSConfig(cert, webDomain)
-			listener = network.NewAutoHttpsListener(listener)
-			listener = tls.NewListener(listener, c)
-			logger.Info("Web server running HTTPS on", listener.Addr())
-		} else {
-			logger.Error("Error loading certificates:", err)
-			logger.Info("Web server running HTTP on", listener.Addr())
-		}
-	} else {
-		logger.Info("Web server running HTTP on", listener.Addr())
-	}
+
+	s.certManager = network.NewCertManager(func() (string, string) {
+		certFile, _ := s.settingService.GetCertFile()
+		keyFile, _ := s.settingService.GetKeyFile()
+		return certFile, keyFile
+	}, webDomain)
+	s.certManager.Start()
+	listener = network.NewFlexTLSListener(listener, s.certManager)
 	s.listener = listener
 
 	s.httpServer = &http.Server{
 		Handler: engine,
 	}
 
+	if s.certManager.HasCert() {
+		logger.Info("Web server running HTTPS on", listener.Addr())
+	} else {
+		logger.Info("Web server running HTTP on", listener.Addr())
+	}
+
 	go func() {
 		s.httpServer.Serve(listener)
 	}()
 
+	go s.autoCertLoop()
 	s.startTask(s.ipLimitFw.Supported())
 
 	isTgbotenabled, err := s.settingService.GetTgbotenabled()
@@ -406,7 +403,34 @@ func (s *Server) Stop() error {
 	if s.listener != nil {
 		err2 = s.listener.Close()
 	}
+	if s.certManager != nil {
+		s.certManager.Stop()
+	}
 	return common.Combine(err1, err2)
+}
+
+func (s *Server) autoCertLoop() {
+	initial := time.NewTimer(2 * time.Minute)
+	defer initial.Stop()
+	select {
+	case <-initial.C:
+		(&service.AutoCertService{}).RenewIfNeeded()
+	case <-s.ctx.Done():
+		return
+	}
+
+	// Local expiry checks are cheap; actual ACME attempts only happen inside
+	// the final 12 hours and retry every 30 minutes.
+	ticker := time.NewTicker(10 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			(&service.AutoCertService{}).RenewIfNeeded()
+		case <-s.ctx.Done():
+			return
+		}
+	}
 }
 
 func (s *Server) GetCtx() context.Context {

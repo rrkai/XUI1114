@@ -6,6 +6,7 @@ yellow='\033[0;33m'
 plain='\033[0m'
 
 cur_dir=$(pwd)
+fresh_install=0
 
 # check root
 [[ $EUID -ne 0 ]] && echo -e "${red}错误：${plain}请使用 root 用户运行此脚本 \n " && exit 1
@@ -89,6 +90,7 @@ config_after_install() {
             local config_password=$(gen_random_string 10)
 
             local config_port=$(shuf -i 50000-59999 -n 1)
+            fresh_install=1
             echo -e "${yellow}已自动生成随机端口：${config_port}${plain}"
 
             /usr/local/x-ui/x-ui setting -username "${config_username}" -password "${config_password}" -port "${config_port}" -webBasePath "${config_webBasePath}"
@@ -196,6 +198,15 @@ install_x-ui() {
     chmod +x /usr/local/x-ui/x-ui.sh
     chmod +x /usr/bin/x-ui
     config_after_install
+    if [[ "${fresh_install}" == "1" ]]; then
+        echo -e "${yellow}正在自动申请面板 IP 证书（Let's Encrypt，6 天有效，到期自动续期）...${plain}"
+        if timeout 120 /usr/local/x-ui/x-ui autocert >/tmp/xui-autocert.log 2>&1; then
+            echo -e "${green}IP 证书申请成功，面板将以 HTTPS 启动${plain}"
+        else
+            echo -e "${yellow}IP 证书申请未成功，面板先以 HTTP 启动；请确认公网 80 端口可用（NAT 机型需先映射），或在“面板设置 - 面板安全”中重试${plain}"
+            tail -n 3 /tmp/xui-autocert.log 2>/dev/null | sed 's/^/  /'
+        fi
+    fi
     rm /usr/local/x-ui-backup/ -rf
     #echo -e "If it is a new installation, the default web port is ${green}54321${plain}, The username and password are ${green}admin${plain} by default"
     #echo -e "Please make sure that this port is not occupied by other procedures,${yellow} And make sure that port 54321 has been released${plain}"

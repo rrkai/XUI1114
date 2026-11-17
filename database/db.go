@@ -193,6 +193,11 @@ func InitDB(dbPath string) error {
 		return err
 	}
 
+	// Port uniqueness checks run on every inbound add/update.
+	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_inbounds_port ON inbounds(port);").Error; err != nil {
+		xlogger.Warning("sqlite: create inbound port index failed: ", err)
+	}
+
 	// Dashboard queries filter clients by expiry and remaining quota.
 	if err := db.Exec("CREATE INDEX IF NOT EXISTS idx_client_traffics_expiry ON client_traffics(enable, expiry_time);").Error; err != nil {
 		xlogger.Warning("sqlite: create client expiry index failed: ", err)

@@ -246,7 +246,7 @@
     padding: 0 10px !important;
     border-radius: 13px;
     color: var(--cb-text);
-    font-size: 13.5px;
+    font-size: calc(13.5px * 1.05);
     transition: background-color .18s var(--cb-ease), color .18s var(--cb-ease);
 }
 
@@ -254,7 +254,7 @@
 #sider-drawer .ant-menu-item .anticon {
     min-width: 24px;
     color: var(--cb-text-2);
-    font-size: 15px;
+    font-size: calc(15px * 1.05);
     transition: color .18s var(--cb-ease);
 }
 
