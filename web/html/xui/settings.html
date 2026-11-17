@@ -962,17 +962,18 @@
                 certNotAfter() {
                     if (!this.certStatus || !this.certStatus.notAfter) return '';
                     const date = new Date(this.certStatus.notAfter);
-                    return isNaN(date.getTime()) ? '' : date.toLocaleString();
+                    // Go zero time serializes as year 1; treat it as unset.
+                    return isNaN(date.getTime()) || date.getFullYear() <= 1 ? '' : date.toLocaleString();
                 },
                 certRenewAt() {
                     if (!this.certStatus || !this.certStatus.renewAt) return '';
                     const date = new Date(this.certStatus.renewAt);
-                    return isNaN(date.getTime()) || date.getTime() <= Date.now() ? '' : date.toLocaleString();
+                    return isNaN(date.getTime()) || date.getFullYear() <= 1 || date.getTime() <= Date.now() ? '' : date.toLocaleString();
                 },
                 certNextAttempt() {
                     if (!this.certStatus || !this.certStatus.nextAttemptAt) return '';
                     const date = new Date(this.certStatus.nextAttemptAt);
-                    return isNaN(date.getTime()) ? '' : date.toLocaleString();
+                    return isNaN(date.getTime()) || date.getFullYear() <= 1 || date.getTime() <= Date.now() ? '' : date.toLocaleString();
                 },
                 certPortBlocked() {
                     return !!(this.certPortStatus && this.certPortStatus.blocked);
