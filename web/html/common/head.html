@@ -4,6 +4,13 @@
     <meta name="renderer" content="webkit">
     <meta name="robots" content="noindex,nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function () {
+            var dark = false;
+            try { dark = localStorage.getItem('dark-mode') === 'true'; } catch (e) {}
+            document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        })();
+    </script>
     <link rel="icon" type="image/x-icon" href="{{ .base_path }}assets/img/favicon.ico?{{ .cur_ver }}">
     <link rel="preload" as="script" href="{{ .base_path }}assets/vue/vue.min.js?{{ .cur_ver }}">
     <link rel="preload" as="script" href="{{ .base_path }}assets/ant-design-vue@1.7.8/antd.min.js">
@@ -28,17 +35,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #040d12;
+            background: #f6f8fc;
             transition: opacity .25s ease;
         }
+        html[data-theme="dark"] #boot-loader { background: #040d12; }
         #boot-loader::after {
             content: "";
             width: 30px;
             height: 30px;
-            border: 2px solid rgba(255, 255, 255, .16);
+            border: 2px solid rgba(15, 23, 42, .14);
             border-top-color: #5f5af7;
             border-radius: 50%;
             animation: boot-spin .8s linear infinite;
+        }
+        html[data-theme="dark"] #boot-loader::after {
+            border-color: rgba(255, 255, 255, .16);
+            border-top-color: #5f5af7;
         }
         @keyframes boot-spin {
             to { transform: rotate(360deg); }
