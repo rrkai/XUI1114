@@ -214,6 +214,9 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 		engine.SetHTMLTemplate(template)
 	}
 	engine.GET(basePath+"assets/*filepath", serveAssets)
+	engine.GET("/favicon.ico", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, assetsBasePath+"img/favicon.ico")
+	})
 
 	g := engine.Group(basePath)
 

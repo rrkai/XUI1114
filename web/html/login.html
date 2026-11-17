@@ -5,11 +5,14 @@
     <meta name="renderer" content="webkit">
     <meta name="robots" content="noindex,nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="{{ .base_path }}assets/img/favicon.ico?{{ .cur_ver }}">
     <link rel="preload" as="script" href="{{ .base_path }}assets/vue/vue.min.js?{{ .cur_ver }}">
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; width: 100%; min-height: 100%; background: #040d12; }
-        [v-cloak] { display: none; }
+        /* The later #app.vb-login rule sets display:flex, which outranks a bare
+           [v-cloak] selector and would expose the raw template while Vue loads. */
+        #app[v-cloak] { display: none !important; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
                          'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji',
@@ -771,7 +774,9 @@
                         </div>
                     </div>
 
-                    <div class="vb-error" v-if="error" role="alert">[[ error ]]</div>
+                    <template v-if="error">
+                        <div class="vb-error" role="alert" v-text="error"></div>
+                    </template>
 
                     <button class="vb-submit" type="submit" :disabled="loading">
                         <span v-if="!loading">{{ i18n "login" }}</span>
