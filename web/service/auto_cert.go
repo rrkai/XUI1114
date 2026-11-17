@@ -972,6 +972,9 @@ func (s *AutoCertService) Issue(target, provider, eabKid, eabHmac, email string)
 	cfg := lego.NewConfig(user)
 	cfg.Certificate.KeyType = certcrypto.EC256
 	cfg.Certificate.Timeout = 90 * time.Second
+	// Let's Encrypt rejects IP addresses in the CSR Common Name (badCSR);
+	// IP certificates must carry the address only as a SAN.
+	cfg.Certificate.DisableCommonName = isIP
 	if provider == CertProviderZeroSSL {
 		cfg.CADirURL = zeroSSLDirectory
 	} else {
