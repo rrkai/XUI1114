@@ -688,7 +688,34 @@
                         if (!this.certForm.target && msg.obj.target) this.certForm.target = msg.obj.target;
                         if (msg.obj.provider) this.certForm.provider = msg.obj.provider;
                         this.certForm.releasePort80 = !!msg.obj.releasePort80;
+                        this.prefillCertTargetForPanelHost();
                     }
+                },
+                prefillCertTargetForPanelHost() {
+                    const host = (window.location.hostname || '').trim();
+                    if (!this.isPanelDomain(host)) return;
+                    if (this.certStatus && this.certStatus.present && this.certStatus.valid &&
+                        this.certCoversHost(this.certStatus, host)) return;
+                    this.certForm.target = host;
+                },
+                isPanelDomain(host) {
+                    if (!host || host.toLowerCase() === 'localhost') return false;
+                    if (host.includes(':')) return false;
+                    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return false;
+                    return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i.test(host);
+                },
+                certCoversHost(status, host) {
+                    const name = host.toLowerCase();
+                    const matches = value => {
+                        const certName = (value || '').trim().toLowerCase();
+                        if (!certName) return false;
+                        if (certName === name) return true;
+                        if (!certName.startsWith('*.')) return false;
+                        const suffix = certName.slice(1);
+                        return name.endsWith(suffix) && name.slice(0, -suffix.length).indexOf('.') === -1;
+                    };
+                    const names = Array.isArray(status.names) ? status.names : [];
+                    return matches(status.subject) || matches(status.target) || names.some(matches);
                 },
                 async checkCertPort(force = false) {
                     if (this.certPortChecking) return;

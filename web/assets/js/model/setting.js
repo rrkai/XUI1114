@@ -36,7 +36,7 @@ class AllSetting {
         this.subJsonURI = "";
         this.subJsonMux = "";
         this.subJsonRules = "";
-        this.ipBlockAfterRemove = false;
+        this.ipBlockAfterRemove = true;
 
         this.timeLocation = "Asia/Shanghai";
 

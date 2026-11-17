@@ -93,6 +93,7 @@ type CertStatus struct {
 	AutoRenew         bool      `json:"autoRenew"`
 	Issuing           bool      `json:"issuing"`
 	Subject           string    `json:"subject"`
+	Names             []string  `json:"names"`
 	Issuer            string    `json:"issuer"`
 	NotBefore         time.Time `json:"notBefore"`
 	NotAfter          time.Time `json:"notAfter"`
@@ -1286,6 +1287,7 @@ func (s *AutoCertService) Status() (CertStatus, error) {
 				status.Present = true
 				status.Valid = now.After(leaf.NotBefore) && now.Before(leaf.NotAfter)
 				status.Subject = leaf.Subject.CommonName
+				status.Names = leaf.DNSNames
 				status.Issuer = leaf.Issuer.CommonName
 				status.NotBefore = leaf.NotBefore
 				status.NotAfter = leaf.NotAfter

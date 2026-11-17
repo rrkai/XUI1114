@@ -60,7 +60,7 @@ var defaultValueMap = map[string]string{
 	"subJsonMux":         "",
 	"subJsonRules":       "",
 	"warp":               "",
-	"ipBlockAfterRemove": "false",
+	"ipBlockAfterRemove": "true",
 }
 
 type SettingService struct{}

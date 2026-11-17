@@ -99,14 +99,14 @@ config_after_install() {
             echo -e "${green}用户名：${config_username}${plain}"
             echo -e "${green}密码：${config_password}${plain}"
             echo -e "${green}端口：${config_port}${plain}"
-            echo -e "${green}WebBasePath：${config_webBasePath}${plain}"
+            echo -e "${green}面板根路径：${config_webBasePath}${plain}"
             echo -e "###############################################"
             echo -e "${yellow}如果忘记登录信息，可执行 'x-ui settings' 查看${plain}"
         else
             local config_webBasePath=$(gen_random_web_base_path)
-            echo -e "${yellow}WebBasePath 缺失或过短，正在重新生成……${plain}"
+            echo -e "${yellow}面板根路径缺失或过短，正在重新生成……${plain}"
             /usr/local/x-ui/x-ui setting -webBasePath "${config_webBasePath}"
-            echo -e "${green}新的 WebBasePath：${config_webBasePath}${plain}"
+            echo -e "${green}新的面板根路径：${config_webBasePath}${plain}"
         fi
     else
         if [[ "$existing_username" == "admin" && "$existing_password" == "admin" ]]; then
@@ -122,7 +122,7 @@ config_after_install() {
             echo -e "###############################################"
             echo -e "${yellow}如果忘记登录信息，可执行 'x-ui settings' 查看${plain}"
         else
-            echo -e "${green}用户名、密码和 WebBasePath 均已设置好，跳过。${plain}"
+            echo -e "${green}用户名、密码和面板根路径均已设置好，跳过。${plain}"
         fi
     fi
 
