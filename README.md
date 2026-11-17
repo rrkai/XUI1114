@@ -50,7 +50,7 @@ VERSION=v26.09 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go
 ```
 
 - 安装脚本从本仓库的 `releases/latest` 下载 `x-ui-linux-<arch>.tar.gz`。
-- 全新安装会自动生成随机面板端口（1024-62000）、WebBasePath 与用户名/密码，并在安装结束时打印，请妥善保存。
+- 全新安装会自动生成随机面板端口（50000-59999）、WebBasePath 与用户名/密码，并在安装结束时打印，请妥善保存。WebBasePath 为 9 位混合字符（2 数字 + 3 小写 + 4 大写，排除 0/1、o/O、l/L、i/I 等易混字符）。
 
 ## 手动安装与升级
 

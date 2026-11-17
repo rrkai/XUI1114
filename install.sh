@@ -67,6 +67,16 @@ gen_random_string() {
     echo "$random_string"
 }
 
+gen_random_web_base_path() {
+    local digits lower upper combined
+    digits=$(head -c 512 /dev/urandom | LC_ALL=C tr -dc '2-9')
+    lower=$(head -c 512 /dev/urandom | LC_ALL=C tr -dc 'abcdefghjkmnpqrstuvwxyz')
+    upper=$(head -c 512 /dev/urandom | LC_ALL=C tr -dc 'ABCDEFGHJKMNPQRSTUVWXYZ')
+    combined="${digits:0:2}${lower:0:3}${upper:0:4}"
+    echo "$combined" | fold -w1 | shuf | tr -d '\n'
+    echo
+}
+
 config_after_install() {
     local existing_username=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'username: .+' | awk '{print $2}')
     local existing_password=$(/usr/local/x-ui/x-ui setting -show true | grep -Eo 'password: .+' | awk '{print $2}')
@@ -74,11 +84,11 @@ config_after_install() {
 
     if [[ ${#existing_webBasePath} -lt 4 ]]; then
         if [[ "$existing_username" == "admin" && "$existing_password" == "admin" ]]; then
-            local config_webBasePath=$(gen_random_string 15)
+            local config_webBasePath=$(gen_random_web_base_path)
             local config_username=$(gen_random_string 10)
             local config_password=$(gen_random_string 10)
 
-            local config_port=$(shuf -i 1024-62000 -n 1)
+            local config_port=$(shuf -i 50000-59999 -n 1)
             echo -e "${yellow}已自动生成随机端口：${config_port}${plain}"
 
             /usr/local/x-ui/x-ui setting -username "${config_username}" -password "${config_password}" -port "${config_port}" -webBasePath "${config_webBasePath}"
@@ -91,7 +101,7 @@ config_after_install() {
             echo -e "###############################################"
             echo -e "${yellow}如果忘记登录信息，可执行 'x-ui settings' 查看${plain}"
         else
-            local config_webBasePath=$(gen_random_string 15)
+            local config_webBasePath=$(gen_random_web_base_path)
             echo -e "${yellow}WebBasePath 缺失或过短，正在重新生成……${plain}"
             /usr/local/x-ui/x-ui setting -webBasePath "${config_webBasePath}"
             echo -e "${green}新的 WebBasePath：${config_webBasePath}${plain}"
