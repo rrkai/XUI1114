@@ -92,7 +92,7 @@ update() {
 }
 
 legacy_version() {
-    echo "请输入面板版本（例如 v26.08）："
+    echo "请输入面板版本（例如 v26.09）："
     read panel_version
 
     if [ -z "$panel_version" ]; then

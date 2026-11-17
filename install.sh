@@ -78,14 +78,8 @@ config_after_install() {
             local config_username=$(gen_random_string 10)
             local config_password=$(gen_random_string 10)
 
-            read -p "是否自定义面板端口？（不设置将随机生成端口）[y/n]：" config_confirm
-            if [[ "${config_confirm}" == "y" || "${config_confirm}" == "Y" ]]; then
-                read -p "请输入面板端口：" config_port
-                echo -e "${yellow}面板端口：${config_port}${plain}"
-            else
-                local config_port=$(shuf -i 1024-62000 -n 1)
-                echo -e "${yellow}已随机生成端口：${config_port}${plain}"
-            fi
+            local config_port=$(shuf -i 1024-62000 -n 1)
+            echo -e "${yellow}已自动生成随机端口：${config_port}${plain}"
 
             /usr/local/x-ui/x-ui setting -username "${config_username}" -password "${config_password}" -port "${config_port}" -webBasePath "${config_webBasePath}"
             echo -e "检测到全新安装，出于安全考虑已生成随机登录信息："

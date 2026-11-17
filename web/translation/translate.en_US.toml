@@ -75,6 +75,8 @@
 
 [pages.login]
 "title" = "Welcome"
+"langLabel" = "Language"
+"toggleTheme" = "Toggle theme"
 "loginAgain" = "Your session has expired, please log in again"
 
 [pages.login.toasts]
@@ -154,6 +156,7 @@
 "exhausted" = "Exhausted"
 "rankToday" = "Today"
 "rankYesterday" = "Yesterday"
+"rankBeforeYesterday" = "2 Days Ago"
 "rankEmpty" = "No data yet — daily totals accumulate from this update on"
 "clientExpiry" = "Client Expiry"
 "expireNone" = "No clients with an expiry date"

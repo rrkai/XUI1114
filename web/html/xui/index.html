@@ -244,13 +244,15 @@
             <a-row :gutter="16" class="cb-rank-row">
                 <a-col :xs="24" :md="12">
                     <a-card class="cb-rank-card">
-                        <div class="cb-card-head">
+                        <div class="cb-card-head cb-rank-head">
                             <span class="cb-card-title">{{ i18n "pages.index.trafficRank" }}</span>
                             <span class="cb-rank-tabs">
                                 <button class="cb-rank-tab" :class="{on: rankTab === 'today'}"
                                         @click="rankTab = 'today'">{{ i18n "pages.index.rankToday" }}</button>
                                 <button class="cb-rank-tab" :class="{on: rankTab === 'yesterday'}"
                                         @click="rankTab = 'yesterday'">{{ i18n "pages.index.rankYesterday" }}</button>
+                                <button class="cb-rank-tab" :class="{on: rankTab === 'beforeYesterday'}"
+                                        @click="rankTab = 'beforeYesterday'">{{ i18n "pages.index.rankBeforeYesterday" }}</button>
                             </span>
                         </div>
                         <div class="cb-rank-list" v-if="rankItems.length">
@@ -585,7 +587,7 @@
             showAlert: false,
             trafficHistory: [],
             rankTab: 'today',
-            rank: {today: [], yesterday: []},
+            rank: {today: [], yesterday: [], beforeYesterday: []},
             expiryItems: [],
             remainingItems: [],
             updateCheck: {hasUpdate: false, url: ''},
@@ -719,6 +721,7 @@
                         this.rank = {
                             today: rank.today || [],
                             yesterday: rank.yesterday || [],
+                            beforeYesterday: rank.beforeYesterday || [],
                         };
                         this.expiryItems = msg.obj.clientExpiry || [];
                         this.remainingItems = msg.obj.remainingTraffic || [];

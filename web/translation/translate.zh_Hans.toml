@@ -75,6 +75,8 @@
 
 [pages.login]
 "title" = "欢迎"
+"langLabel" = "语言"
+"toggleTheme" = "切换主题"
 "loginAgain" = "会话过期，请重新登录"
 
 [pages.login.toasts]
@@ -154,6 +156,7 @@
 "exhausted" = "已用尽"
 "rankToday" = "今日"
 "rankYesterday" = "昨日"
+"rankBeforeYesterday" = "前日"
 "rankEmpty" = "暂无数据，按日统计从升级后开始累计"
 "clientExpiry" = "客户端到期"
 "expireNone" = "暂无启用中的到期客户端"

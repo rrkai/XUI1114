@@ -43,14 +43,14 @@
 bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh)
 ```
 
-安装指定版本（版本号格式如 `v26.08`，即 2026 年第 8 次发布；不指定版本时安装 `releases/latest`）：
+安装指定版本（版本号格式如 `v26.09`，即 2026 年第 9 次发布；不指定版本时安装 `releases/latest`）：
 
 ```sh
-VERSION=v26.08 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh) $VERSION
+VERSION=v26.09 && bash <(curl -Ls https://raw.githubusercontent.com/rrkai/xui-go/main/install.sh) $VERSION
 ```
 
 - 安装脚本从本仓库的 `releases/latest` 下载 `x-ui-linux-<arch>.tar.gz`。
-- 默认面板端口 `54321`，默认账号 `admin / admin`，首次登录后请立即修改密码并修改面板路径/端口。
+- 全新安装会自动生成随机面板端口（1024-62000）、WebBasePath 与用户名/密码，并在安装结束时打印，请妥善保存。
 
 ## 手动安装与升级
 

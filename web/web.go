@@ -296,6 +296,14 @@ func (s *Server) Start() (err error) {
 		}
 	}()
 
+	loc, err := s.settingService.GetTimeLocation()
+	if err != nil {
+		return err
+	}
+	// Day buckets and user-facing timestamps follow the panel time zone, not
+	// the host TZ, which is usually UTC on VPS images.
+	time.Local = loc
+
 	s.ipLimitFw = iplimit.NewFirewall()
 	if s.ipLimitFw.Supported() {
 		if err := s.ipLimitFw.Init(); err != nil {
@@ -308,10 +316,6 @@ func (s *Server) Start() (err error) {
 		logger.Warning("init online store failed:", err)
 	}
 
-	loc, err := s.settingService.GetTimeLocation()
-	if err != nil {
-		return err
-	}
 	s.cron = cron.New(cron.WithLocation(loc), cron.WithSeconds())
 	s.cron.Start()
 

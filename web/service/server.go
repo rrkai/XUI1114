@@ -820,10 +820,11 @@ type TrafficRankItem struct {
 func (s *ServerService) GetTrafficRank(limit int) (map[string][]TrafficRankItem, error) {
 	db := database.GetDB()
 	now := time.Now()
-	result := make(map[string][]TrafficRankItem, 2)
+	result := make(map[string][]TrafficRankItem, 3)
 	for key, day := range map[string]string{
-		"today":     now.Format("2006-01-02"),
-		"yesterday": now.AddDate(0, 0, -1).Format("2006-01-02"),
+		"today":           now.Format("2006-01-02"),
+		"yesterday":       now.AddDate(0, 0, -1).Format("2006-01-02"),
+		"beforeYesterday": now.AddDate(0, 0, -2).Format("2006-01-02"),
 	} {
 		items := make([]TrafficRankItem, 0, limit)
 		err := db.Model(&model.ClientTrafficDaily{}).

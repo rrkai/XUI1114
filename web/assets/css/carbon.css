@@ -455,8 +455,18 @@
     width: 100%;
 }
 
+.cb-rank-head {
+    flex-wrap: wrap;
+}
+
+.cb-rank-head .cb-card-title {
+    white-space: nowrap;
+}
+
 .cb-rank-tabs {
     display: inline-flex;
+    flex-wrap: wrap;
+    max-width: 100%;
     gap: 2px;
     padding: 3px;
     border-radius: 10px;
@@ -472,6 +482,7 @@
     font-family: inherit;
     font-size: 12.5px;
     font-weight: 600;
+    white-space: nowrap;
     cursor: pointer;
     transition: background-color .18s var(--cb-ease), color .18s var(--cb-ease);
 }
